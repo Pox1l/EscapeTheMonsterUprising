@@ -12,3 +12,6 @@
 - [x] Project upload
 - [ ] Create game
 - [ ] Export project
+
+> [!IMPORTANT]
+> The project must be finished by May 
