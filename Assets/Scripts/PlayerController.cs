@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 10f;
+    public float moveSpeed = 5f;
 
 
     public Rigidbody2D rb;
+    public Animator animator;
 
     Vector2 movement;
     void Start()
@@ -20,6 +21,10 @@ public class PlayerController : MonoBehaviour
     {
         movement.x = Input.GetAxisRaw("Horizontal") * moveSpeed;
         movement.y = Input.GetAxisRaw("Vertical") * moveSpeed;
+
+        animator.SetFloat("Horizontal",movement.x);
+        animator.SetFloat("Vertical", movement.y);
+        animator.SetFloat("Speed", movement.sqrMagnitude);
     }
     private void FixedUpdate()
     {
