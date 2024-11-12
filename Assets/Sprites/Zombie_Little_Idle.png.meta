@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8c52bfb7bd350014e8cf58dac6969447
+guid: 44607526682e1a84a9748ff849fa98c8
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Project_characters_0
+      name: Zombie_Little_Idle_0
       rect:
         serializedVersion: 2
         x: 0
@@ -124,14 +124,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 159a9c20e296829498cafcf830869d9e
-      internalID: -1923895675
+      spriteID: d57718e2502dd684290920e5591bb47c
+      internalID: -1675608429
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Project_characters_1
+      name: Zombie_Little_Idle_1
       rect:
         serializedVersion: 2
         x: 32
@@ -145,14 +145,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 42354326fa84afb4aa387f8b874dca73
-      internalID: 569268201
+      spriteID: 92df4d14cd0821a4f90f6924582084a2
+      internalID: -2144596441
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Project_characters_2
+      name: Zombie_Little_Idle_2
       rect:
         serializedVersion: 2
         x: 64
@@ -166,14 +166,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d7f267a0ee184d8428e22a9cbf17e2ca
-      internalID: 125345358
+      spriteID: ce64e64a9d62fbb4182898d46b408607
+      internalID: 402001878
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Project_characters_3
+      name: Zombie_Little_Idle_3
       rect:
         serializedVersion: 2
         x: 96
@@ -187,14 +187,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: db4af045a8ae295419cd442bdaf92a63
-      internalID: -1965329533
+      spriteID: 316b8fdf214b44f4db0da48574a765c4
+      internalID: -1037585365
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Project_characters_4
+      name: Zombie_Little_Idle_4
       rect:
         serializedVersion: 2
         x: 128
@@ -208,8 +208,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a7328db076617d446bfb00906d5bcc90
-      internalID: -1096352659
+      spriteID: ef64477cb119bf44c82c85860b361891
+      internalID: 420326881
       vertices: []
       indices: 
       edges: []
@@ -225,11 +225,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Project_characters_0: -1923895675
-      Project_characters_1: 569268201
-      Project_characters_2: 125345358
-      Project_characters_3: -1965329533
-      Project_characters_4: -1096352659
+      Zombie_Little_Idle_0: -1675608429
+      Zombie_Little_Idle_1: -2144596441
+      Zombie_Little_Idle_2: 402001878
+      Zombie_Little_Idle_3: -1037585365
+      Zombie_Little_Idle_4: 420326881
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
