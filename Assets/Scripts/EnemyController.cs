@@ -9,23 +9,8 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
-        currentHealth = maxHealth;
+      
     }
 
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        Debug.Log("Enemy took damage: " + damage);
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
-    private void Die()
-    {
-        Debug.Log("Enemy is dead.");
-        Destroy(gameObject);
-    }
+    
 }

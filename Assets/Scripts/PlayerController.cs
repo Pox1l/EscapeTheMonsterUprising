@@ -13,31 +13,23 @@ public class PlayerController : MonoBehaviour
 
     Vector2 movement;
 
-
-    public int maxHealth = 100;
-    public int currentHealth;
-
-    public int expPoints = 0;
-    public int expToLevelUp = 100;
-
-    public Slider healthBar;
-    public Slider expBar;
-
-    public int damageToEnemy = 10;
+    public GameObject npc;
+    private bool isFollowing = false;
 
     void Start()
     {
-        currentHealth = maxHealth;
-        healthBar.maxValue = maxHealth;
-        healthBar.value = currentHealth;
-
-        expBar.maxValue = expToLevelUp;
-        expBar.value = expPoints;
+        
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            isFollowing = !isFollowing;
+            npc.GetComponent<NPCFollow>().SetFollowing(isFollowing);
+        }
+
         movement.x = Input.GetAxisRaw("Horizontal") * moveSpeed;
         movement.y = Input.GetAxisRaw("Vertical") * moveSpeed;
 
@@ -47,59 +39,14 @@ public class PlayerController : MonoBehaviour
 
 
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            // Simulate attacking the enemy
-            EnemyController enemy = FindObjectOfType<EnemyController>();
-            if (enemy != null)
-            {
-                enemy.TakeDamage(damageToEnemy);
-                GainExp(20); // Gain EXP for attacking
-            }
-        }
-
-        // Check if player is dead
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+       
+        
     }
     private void FixedUpdate()
     {
         rb.MovePosition(rb.position + movement * moveSpeed * Time.deltaTime);
     }
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        healthBar.value = currentHealth;
-    }
 
-    private void GainExp(int exp)
-    {
-        expPoints += exp;
-        expBar.value = expPoints;
+   
 
-        if (expPoints >= expToLevelUp)
-        {
-            LevelUp();
-        }
-    }
-
-    private void LevelUp()
-    {
-        expPoints = 0;
-        expBar.value = expPoints;
-        expToLevelUp += 50;
-        maxHealth += 20;
-        currentHealth = maxHealth;
-        healthBar.maxValue = maxHealth;
-        healthBar.value = currentHealth;
-        Debug.Log("Player Leveled Up!");
-    }
-
-    private void Die()
-    {
-        Debug.Log("Player is dead.");
-        gameObject.SetActive(false);
-    }
 }
