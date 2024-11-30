@@ -1,77 +1,72 @@
 using UnityEngine;
 
-public class NPCFollow : MonoBehaviour
+public class NPCFollowWithDirectionalAnimation : MonoBehaviour
 {
-    public Transform player; // Reference to the player
-    public float followDistance = 2.0f; // Distance at which the NPC will stop
-    public float speed = 2.0f; // Movement speed of the NPC
-    public Animator animator; // Animator to control NPC animations
-    public float detectionRange = 5.0f; // Range within which the NPC detects the player
+    public Transform player; // Assign the player's transform in the Inspector
+    public float followSpeed = 3f; // Speed at which NPC follows the player
+    private bool isFollowing = false;
+    private bool inRange = false;
 
-    private bool isFollowing = false; // Indicates whether the NPC is following the player
+    private Animator animator; // Reference to the Animator component
 
-    void Update()
+    private void Start()
     {
-        if (player != null)
-        {
-            if (InRange()) // Check if the player is in range
-            {
-                if (isFollowing)
-                {
-                    FollowPlayer();
-                }
-            }
-            else
-            {
-                StopFollowing();
-            }
-        }
+        // Get the Animator component attached to the NPC
+        animator = GetComponent<Animator>();
     }
 
-    // Method to check if the player is within detection range
-    private bool InRange()
+    private void Update()
     {
-        float distance = Vector2.Distance(transform.position, player.position);
-        return distance <= detectionRange;
+        // Toggle following state when pressing 'E' in range
+        if (inRange && Input.GetKeyDown(KeyCode.E))
+        {
+            isFollowing = !isFollowing;
+            Debug.Log("Following toggled: " + isFollowing);
+        }
+
+        // Follow player and update animation parameters if following
+        if (isFollowing)
+        {
+            FollowPlayer();
+        }
+        else
+        {
+            animator.SetFloat("Speed", 0); // Stop animation when not following
+        }
     }
 
     private void FollowPlayer()
     {
-        // Calculate direction towards the player
-        Vector2 direction = player.position - transform.position;
-
-        if (direction.magnitude > followDistance) // If the player is beyond followDistance
+        if (player != null)
         {
-            // Move towards the player
-            Vector2 newPosition = Vector2.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
-            transform.position = new Vector3(newPosition.x, newPosition.y, transform.position.z); // Maintain Z-axis
+            Vector2 direction = (player.position - transform.position).normalized;
+            float speed = direction.magnitude;
 
-            // Update animation based on movement
-            if (animator != null)
-            {
-                animator.SetFloat("Horizontal", direction.x);
-                animator.SetFloat("Vertical", direction.y);
-                animator.SetFloat("Speed", direction.magnitude);
-            }
-        }
-        else
-        {
-            StopFollowing();
+            // Move NPC towards player
+            transform.position = Vector2.MoveTowards(transform.position, player.position, followSpeed * Time.deltaTime);
+
+            // Update Animator parameters
+            animator.SetFloat("Horizontal", direction.x);
+            animator.SetFloat("Vertical", direction.y);
+            animator.SetFloat("Speed", speed);
         }
     }
 
-    private void StopFollowing()
+    private void OnTriggerEnter2D(Collider2D collider2D)
     {
-        // Stop animations when the NPC is idle
-        if (animator != null)
+        if (collider2D.CompareTag("Player"))
         {
-            animator.SetFloat("Speed", 0f);
+            Debug.Log("Player entered interaction range.");
+            inRange = true;
         }
     }
 
-    // Public method to toggle following
-    public void SetFollowing(bool following)
+    private void OnTriggerExit2D(Collider2D collider2D)
     {
-        isFollowing = following;
+        if (collider2D.CompareTag("Player"))
+        {
+            Debug.Log("Player exited interaction range.");
+            inRange = false;
+        }
     }
 }

@@ -13,8 +13,8 @@ public class PlayerController : MonoBehaviour
 
     Vector2 movement;
 
-    public GameObject npc;
-    private bool isFollowing = false;
+   
+   
 
     void Start()
     {
@@ -24,11 +24,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            isFollowing = !isFollowing;
-            npc.GetComponent<NPCFollow>().SetFollowing(isFollowing);
-        }
+        
 
         movement.x = Input.GetAxisRaw("Horizontal") * moveSpeed;
         movement.y = Input.GetAxisRaw("Vertical") * moveSpeed;
@@ -36,11 +32,7 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("Horizontal",movement.x);
         animator.SetFloat("Vertical", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
-
-
-
-       
-        
+     
     }
     private void FixedUpdate()
     {
