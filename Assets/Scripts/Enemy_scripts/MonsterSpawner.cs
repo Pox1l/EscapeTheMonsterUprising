@@ -1,12 +1,13 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class MonsterSpawner : MonoBehaviour
 {
-    public GameObject monsterPrefab; // The monster prefab to spawn
-    public Transform player;         // Reference to the player
-    public float spawnDistance = 10f; // Distance outside the camera bounds to spawn monsters
-    public float spawnInterval = 3f; // Time interval between spawns
-    public int maxMonsters = 10; // Maximum number of monsters allowed at a time
+    public GameObject monsterPrefab; // Prefab monstera
+    public float spawnDistance = 10f; // Vzdálenost od okrajù kamery pro spawn
+    public float spawnInterval = 3f; // Interval mezi spawnováním monster
+    public int maxMonsters = 10;     // Maximální poèet monster ve scénì
+    public Tilemap grassTilemap;     // Tilemap, kde se monstra mohou spawnovat
 
     private Camera mainCamera;
     private float nextSpawnTime;
@@ -15,11 +16,16 @@ public class MonsterSpawner : MonoBehaviour
     {
         mainCamera = Camera.main;
         nextSpawnTime = Time.time + spawnInterval;
+
+        if (grassTilemap == null)
+        {
+            Debug.LogError("Tilemap pro trávu není pøiøazená! Monstra se nebudou spawnovat správnì.");
+        }
     }
 
     void Update()
     {
-        // Check if it's time to spawn a new monster
+        // Spawnuj monstra, pokud je to èasovì vhodné a nepøekroèen limit
         if (Time.time >= nextSpawnTime && CountMonsters() < maxMonsters)
         {
             SpawnMonster();
@@ -29,46 +35,70 @@ public class MonsterSpawner : MonoBehaviour
 
     void SpawnMonster()
     {
-        // Get the camera bounds in world space
+        if (mainCamera == null)
+        {
+            Debug.LogError("Hlavní kamera není nastavena!");
+            return;
+        }
+
+        // Výpoèet hranic kamery
         Vector3 cameraPosition = mainCamera.transform.position;
         float halfHeight = mainCamera.orthographicSize;
         float halfWidth = mainCamera.aspect * halfHeight;
 
-        // Randomize the side where the monster will spawn (0 = top, 1 = bottom, 2 = left, 3 = right)
+        // Náhodný výbìr strany, kde se monstrum spawnuje (0 = nahoøe, 1 = dole, 2 = vlevo, 3 = vpravo)
         int spawnSide = Random.Range(0, 4);
 
         Vector3 spawnPosition = Vector3.zero;
 
         switch (spawnSide)
         {
-            case 0: // Top
-                spawnPosition = new Vector3(Random.Range(cameraPosition.x - halfWidth, cameraPosition.x + halfWidth), cameraPosition.y + halfHeight + spawnDistance, 0);
+            case 0: // Nahoøe
+                spawnPosition = new Vector3(
+                    Random.Range(cameraPosition.x - halfWidth, cameraPosition.x + halfWidth),
+                    cameraPosition.y + halfHeight + spawnDistance,
+                    0);
                 break;
-            case 1: // Bottom
-                spawnPosition = new Vector3(Random.Range(cameraPosition.x - halfWidth, cameraPosition.x + halfWidth), cameraPosition.y - halfHeight - spawnDistance, 0);
+
+            case 1: // Dole
+                spawnPosition = new Vector3(
+                    Random.Range(cameraPosition.x - halfWidth, cameraPosition.x + halfWidth),
+                    cameraPosition.y - halfHeight - spawnDistance,
+                    0);
                 break;
-            case 2: // Left
-                spawnPosition = new Vector3(cameraPosition.x - halfWidth - spawnDistance, Random.Range(cameraPosition.y - halfHeight, cameraPosition.y + halfHeight), 0);
+
+            case 2: // Vlevo
+                spawnPosition = new Vector3(
+                    cameraPosition.x - halfWidth - spawnDistance,
+                    Random.Range(cameraPosition.y - halfHeight, cameraPosition.y + halfHeight),
+                    0);
                 break;
-            case 3: // Right
-                spawnPosition = new Vector3(cameraPosition.x + halfWidth + spawnDistance, Random.Range(cameraPosition.y - halfHeight, cameraPosition.y + halfHeight), 0);
+
+            case 3: // Vpravo
+                spawnPosition = new Vector3(
+                    cameraPosition.x + halfWidth + spawnDistance,
+                    Random.Range(cameraPosition.y - halfHeight, cameraPosition.y + halfHeight),
+                    0);
                 break;
         }
 
-        // Instantiate the monster at the calculated position
-        GameObject monster = Instantiate(monsterPrefab, spawnPosition, Quaternion.identity);
+        // Pøevod na pozici v Tilemap
+        Vector3Int tilePosition = grassTilemap.WorldToCell(spawnPosition);
 
-        // Assign the player reference to the monster's script
-        EnemyController followScript = monster.GetComponent<EnemyController>();
-        if (followScript != null)
+        // Kontrola, zda je na Tilemapì tráva
+        if (grassTilemap.HasTile(tilePosition))
         {
-            followScript.player = player;
+            Instantiate(monsterPrefab, spawnPosition, Quaternion.identity);
+        }
+        else
+        {
+            Debug.Log($"Pozice {spawnPosition} není na Tilemapì trávy. Monstrum se nespawnovalo.");
         }
     }
 
     int CountMonsters()
     {
-        // Count the current number of monsters in the scene
+        // Spoèítá aktuální poèet monster ve scénì podle tagu
         return GameObject.FindGameObjectsWithTag("Monster").Length;
     }
 }

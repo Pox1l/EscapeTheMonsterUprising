@@ -20,13 +20,20 @@ public class NPCFollower_withAnim : MonoBehaviour
 
     private void Start()
     {
-        // Get the Animator component attached to the NPC
         animator = GetComponent<Animator>();
+        FindPlayer(); // Try to find the player at the start
         UpdateNPCCountUI(); // Update UI at the start
     }
 
     private void Update()
     {
+        // If player is null, try to find them
+        if (player == null)
+        {
+            FindPlayer();
+            return;
+        }
+
         // Toggle following state when pressing 'E' in range
         if (inRange && Input.GetKeyDown(KeyCode.E))
         {
@@ -59,17 +66,12 @@ public class NPCFollower_withAnim : MonoBehaviour
     {
         if (player != null)
         {
-            // Calculate target position based on assigned offset
             Vector2 targetPosition = (Vector2)player.position + assignedOffset;
-
-            // Calculate direction and speed for animations
             Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
             float speed = (targetPosition - (Vector2)transform.position).magnitude;
 
-            // Move NPC towards the target position
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, followSpeed * Time.deltaTime);
 
-            // Update Animator parameters
             animator.SetFloat("Horizontal", direction.x);
             animator.SetFloat("Vertical", direction.y);
             animator.SetFloat("Speed", speed);
@@ -78,14 +80,13 @@ public class NPCFollower_withAnim : MonoBehaviour
 
     private void StartFollowing()
     {
-        // Assign offset based on current number of following NPCs
         if (followingNPCCount == 0)
         {
-            assignedOffset = rightTopOffset; // First NPC goes right-top
+            assignedOffset = rightTopOffset;
         }
         else if (followingNPCCount == 1)
         {
-            assignedOffset = leftTopOffset; // Second NPC goes left-top
+            assignedOffset = leftTopOffset;
         }
         else
         {
@@ -95,16 +96,16 @@ public class NPCFollower_withAnim : MonoBehaviour
 
         isFollowing = true;
         followingNPCCount++;
-        UpdateNPCCountUI(); // Update the UI when NPC starts following
+        UpdateNPCCountUI();
         Debug.Log($"NPC started following. Assigned offset: {assignedOffset}. Total following NPCs: {followingNPCCount}");
     }
 
     private void StopFollowing()
     {
         isFollowing = false;
-        assignedOffset = Vector2.zero; // Clear the assigned offset
+        assignedOffset = Vector2.zero;
         followingNPCCount--;
-        UpdateNPCCountUI(); // Update the UI when NPC stops following
+        UpdateNPCCountUI();
         Debug.Log("NPC stopped following. Total following NPCs: " + followingNPCCount);
     }
 
@@ -134,13 +135,26 @@ public class NPCFollower_withAnim : MonoBehaviour
         }
     }
 
+    private void FindPlayer()
+    {
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+        {
+            player = playerObject.transform;
+            Debug.Log("Player found and assigned to NPC.");
+        }
+        else
+        {
+            Debug.LogWarning("Player not found in the scene.");
+        }
+    }
+
     private void OnDestroy()
     {
-        // Ensure following count is updated correctly if NPC is destroyed
         if (isFollowing)
         {
             followingNPCCount--;
-            UpdateNPCCountUI(); // Update the UI when NPC is destroyed
+            UpdateNPCCountUI();
             Debug.Log("NPC destroyed. Total following NPCs: " + followingNPCCount);
         }
     }

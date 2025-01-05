@@ -7,6 +7,8 @@ TagManager:
   - Monster
   - Grass
   - Tree
+  - EntryPoint
+  - NPC
   layers:
   - Default
   - TransparentFX
