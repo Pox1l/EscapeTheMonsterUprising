@@ -2,108 +2,123 @@ using UnityEngine;
 
 public class GunHolder : MonoBehaviour
 {
-    [SerializeField] private Transform gun; // Reference na Transform zbranì
-    [SerializeField] private Transform gunHoldPoint; // Bod, kam se zbraò pøipojí
-    [SerializeField] private Vector2 offset; // Posunutí zbranì od bodu pøipojení
-    [SerializeField] private bool followMouse = true; // Nastavit smìøování zbranì podle myši
-    [SerializeField] private SpriteRenderer playerSprite; // Renderer hráèe pro kontrolu vrstvy
-    [SerializeField] private SpriteRenderer gunSprite; // Renderer zbranì
+    [SerializeField] private Transform gunHoldPoint; // Bod pøipojení zbranì
+    [SerializeField] private Vector2 offset; // Posunutí zbranì
+    private Transform currentGun; // Aktuální zbraò
+    private Camera mainCamera; // Hlavní kamera pro získání pozice myši
 
-    private Vector3 lastPosition;
-    private bool isIdle;
-    private float idleThreshold = 0.01f; // Prahová hodnota pro detekci klidu
-    private float idleTime = 0.2f; // Èas, po kterém se hráè považuje za "idle"
-    private float idleTimer = 0f; // Èasovaè pro idle stav
+    public static GunHolder Instance { get; private set; } // Singleton instance
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject); // Zniè duplicitní instance
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // Zajistí, že objekt pøežije pøechod mezi scénami
+        Debug.Log("GunHolder instance byla inicializována.");
+    }
 
     private void Start()
     {
-        lastPosition = transform.position; // Uložení poèáteèní pozice hráèe
+        EnsureGunHoldPointExists(); // Ujistíme se, že máme pøiøazený gunHoldPoint
+        AssignMainCamera(); // Inicializace kamery
     }
 
     private void Update()
     {
-        if (gun != null && gunHoldPoint != null)
+        if (mainCamera == null)
         {
-            // Nastavení pozice zbranì podle bodu pøipojení a offsetu
-            gun.position = gunHoldPoint.position + (Vector3)offset;
+            AssignMainCamera(); // Obnoví kameru, pokud byla zmìnìna scéna
+        }
 
-            // Detekce smìru pohybu
-            Vector3 movementDirection = transform.position - lastPosition;
+        if (gunHoldPoint == null)
+        {
+            EnsureGunHoldPointExists(); // Obnoví gunHoldPoint, pokud byl ztracen
+        }
 
-            if (movementDirection.magnitude < idleThreshold)
-            {
-                // Pokud se hráè nehýbe, zaèneme odpoèítávat idle èas
-                idleTimer += Time.deltaTime;
-                if (idleTimer >= idleTime)
-                {
-                    isIdle = true;
-                }
-            }
-            else
-            {
-                // Hráè se hýbe, resetujeme idle stav
-                idleTimer = 0f;
-                isIdle = false;
-
-                if (movementDirection.y > idleThreshold)
-                {
-                    // Hráè bìží nahoru, zbraò se skryje
-                    gunSprite.sortingOrder = playerSprite.sortingOrder - 1;
-                }
-                else if (movementDirection.y < -idleThreshold)
-                {
-                    // Hráè bìží dolù, zbraò je viditelná
-                    gunSprite.sortingOrder = playerSprite.sortingOrder + 1;
-                }
-            }
-
-            if (isIdle)
-            {
-                // Pokud je hráè v klidu, zbraò se vrátí pøed nìj
-                gunSprite.sortingOrder = playerSprite.sortingOrder + 1;
-            }
-
-            if (followMouse)
-            {
-                // Smìr k myši
-                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                Vector3 direction = mousePosition - gun.position;
-                direction.z = 0; // Ignorujeme osu Z v 2D
-
-                // Otoèení zbranì
-                gun.right = direction;
-
-                // Zrcadlení zbranì na ose Y, pokud je myš nalevo
-                if (mousePosition.x < transform.position.x)
-                {
-                    gun.localScale = new Vector3(1, -1, 1); // Zrcadlení na ose Y
-                }
-                else
-                {
-                    gun.localScale = new Vector3(1, 1, 1); // Normální orientace
-                }
-            }
-
-            lastPosition = transform.position; // Aktualizace poslední pozice
+        if (currentGun != null)
+        {
+            RotateGunTowardsMouse(); // Otoèení zbranì za myší
         }
     }
 
-    public void AttachGun(Transform newGun)
+    public void AttachGun(GameObject gunPrefab)
     {
-        // Pøipojení nové zbranì
-        gun = newGun;
-        gun.SetParent(gunHoldPoint); // Zajistí, že zbraò bude vždy držena
-        gunSprite = gun.GetComponent<SpriteRenderer>(); // Získání rendereru zbranì
+        DetachGun(); // Odstraò starou zbraò
+
+        if (gunHoldPoint == null)
+        {
+            Debug.LogError("GunHoldPoint is null. Cannot attach a gun.");
+            return;
+        }
+
+        // Vytvoø novou zbraò a pøipoj ji
+        GameObject newGun = Instantiate(gunPrefab, gunHoldPoint.position + (Vector3)offset, Quaternion.identity);
+        newGun.transform.SetParent(gunHoldPoint);
+        currentGun = newGun.transform;
     }
 
     public void DetachGun()
     {
-        // Odpojení zbranì
-        if (gun != null)
+        // Odpojí aktuální zbraò
+        if (currentGun != null)
         {
-            gun.SetParent(null); // Uvolní zbraò z držáku
-            gun = null;
-            gunSprite = null;
+            Destroy(currentGun.gameObject);
+            currentGun = null;
+        }
+    }
+
+    private void RotateGunTowardsMouse()
+    {
+        if (mainCamera == null || gunHoldPoint == null) return;
+
+        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition); // Získání pozice myši
+        mousePosition.z = 0; // Zajištìní, že je myš na stejné úrovni jako zbraò
+
+        Vector3 direction = (mousePosition - gunHoldPoint.position).normalized; // Smìr od zbranì k myši
+
+        // Nastavení rotace zbranì
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        currentGun.rotation = Quaternion.Euler(0, 0, angle);
+
+        // Zrcadlení zbranì podle pozice myši
+        if (mousePosition.x < transform.position.x)
+        {
+            currentGun.localScale = new Vector3(1, -1, 1);
+        }
+        else
+        {
+            currentGun.localScale = new Vector3(1, 1, 1);
+        }
+    }
+
+    private void AssignMainCamera()
+    {
+        mainCamera = Camera.main; // Nastaví hlavní kameru
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("Main camera not found. Please ensure there is a camera tagged as 'MainCamera'.");
+        }
+    }
+
+    private void EnsureGunHoldPointExists()
+    {
+        if (gunHoldPoint == null)
+        {
+            GameObject foundObject = GameObject.Find("GunHolder"); // Najde objekt podle jména
+            if (foundObject != null)
+            {
+                gunHoldPoint = foundObject.transform;
+                Debug.Log("GunHoldPoint assigned successfully.");
+            }
+            else
+            {
+                Debug.LogError("GunHoldPoint not found in the scene. Please ensure it exists.");
+            }
         }
     }
 }

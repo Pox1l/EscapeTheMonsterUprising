@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EnemyDamageAndHealth : MonoBehaviour
+public class Enemy : MonoBehaviour
 {
     [Header("Enemy Stats")]
     public int maxHealth = 50; // Maximální zdraví nepøítele

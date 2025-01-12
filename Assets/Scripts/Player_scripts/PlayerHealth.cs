@@ -38,6 +38,7 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player has died!");
+        Destroy(gameObject);
         // Pøidej herní logiku pro smrt hráèe, napø. restart hry nebo konec hry
     }
 }

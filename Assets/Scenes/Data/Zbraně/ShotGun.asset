@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfd5f435e10f3584daf88cc9b5d1acd6, type: 3}
+  m_Name: ShotGun
+  m_EditorClassIdentifier: 
+  weaponName: ShotGun
+  weaponSprite: {fileID: -1676716628, guid: e1d91946d173d1f4b930c3aeb65fa9d3, type: 3}
+  weaponPrefab: {fileID: 3279245827867348216, guid: 85a19db93d1c7d94cba55fe001f31e4a, type: 3}
+  bulletPrefab: {fileID: 664420151155339419, guid: 856c714d95c0c22479cbad8c88c1bb68, type: 3}
+  fireRate: 0.5
+  damage: 10
+  cost: 100
