@@ -1,106 +1,138 @@
 using UnityEngine;
+using TMPro;
 
 public class ShopSystem : MonoBehaviour
 {
-    public GameObject shopUI; // UI panel obchodu
-    public GunHolder gunHolder; // Reference na GunHolder
-    public PlayerStats playerStats; // Reference na hráèovy peníze
-    public Weapon[] weaponsForSale; // Pole zbraní, které si hráè mùže koupit
+    [SerializeField] private GameObject[] weaponPrefabs; // Prefaby dostupných zbraní
+    [SerializeField] private int[] weaponCosts; // Ceny jednotlivých zbraní
+    [SerializeField] private TMP_Text moneyText; // TextMeshPro pro zobrazení aktuálních penìz
+    [SerializeField] private TMP_Text feedbackText; // TextMeshPro pro zpìtnou vazbu hráèi
+    [SerializeField] private GameObject shopUI; // UI panel obchodu
 
-    private bool playerInRange = false;
+    private bool isShopOpen = false; // Sledování stavu otevøeného obchodu
+    private bool playerInShopZone = false; // Kontrola, zda je hráè v zónì obchodu
 
-    void Start()
+    private void Start()
     {
-        // Pokud gunHolder není pøiøazen v inspektoru, pokusíme se získat instanci ze singletonu
-        if (gunHolder == null)
-        {
-            gunHolder = GunHolder.Instance; // Pøiøazení ze singletonu
-        }
-
-        if (gunHolder == null)
-        {
-            Debug.LogError("GunHolder stále není pøiøazen! Zkontroluj, zda je singleton správnì inicializován.");
-            return;
-        }
-
-        Debug.Log("ShopSystem: GunHolder je nyní pøiøazen.");
-
+        UpdateMoneyUI(); // Aktualizace zobrazení penìz na zaèátku
         if (shopUI != null)
-            shopUI.SetActive(false); // Skrýt obchod pøi startu
-    }
-
-    void Update()
-    {
-        if (playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            ToggleShopUI();
+            shopUI.SetActive(false); // Ujistíme se, že je obchod na zaèátku skrytý
+        }
+        else
+        {
+            Debug.LogWarning("Shop UI is not assigned.");
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void Update()
     {
-        if (collision.CompareTag("Player"))
+        // Zkontroluj stisknutí klávesy E pouze pokud je hráè v zónì obchodu
+        if (Input.GetKeyDown(KeyCode.E) && playerInShopZone)
         {
-            playerInRange = true;
+            ToggleShopUI(); // Otevøe nebo zavøe obchod
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Player"))
-        {
-            playerInRange = false;
-            if (shopUI != null)
-                shopUI.SetActive(false); // Zavøít obchod pøi odchodu
-        }
-    }
-
-    private void ToggleShopUI()
+    public void ToggleShopUI()
     {
         if (shopUI != null)
         {
-            shopUI.SetActive(!shopUI.activeSelf);
+            isShopOpen = !isShopOpen;
+            shopUI.SetActive(isShopOpen); // Pøepínání viditelnosti obchodu
+            // Místo nastavování timeScale na 0 použijeme unscaledTime pro správné ovládání UI bez zpomalení hry
+            if (isShopOpen)
+            {
+                Time.timeScale = 1; // Keep the game running normally
+                Time.fixedDeltaTime = 0.02f * Time.timeScale; // Ensure physics runs smoothly
+            }
+            else
+            {
+                Time.timeScale = 1; // Restore normal time flow when the shop is closed
+            }
+        }
+        else
+        {
+            Debug.LogError("Shop UI is not assigned.");
         }
     }
 
     public void BuyWeapon(int weaponIndex)
     {
-        Weapon weapon = weaponsForSale[weaponIndex];
-
-        if (playerStats.money >= weapon.cost)
+        if (weaponIndex < 0 || weaponIndex >= weaponPrefabs.Length)
         {
-            playerStats.money -= weapon.cost; // Odeèíst peníze
-            EquipWeapon(weapon); // Vybavit hráèe zbraní
-            Debug.Log($"Zakoupil jsi zbraò: {weapon.weaponName}");
+            Debug.LogError("Invalid weapon index.");
+            return;
+        }
+
+        int weaponCost = weaponCosts[weaponIndex];
+
+        if (PlayerMoney.Instance.HasEnoughMoney(weaponCost))
+        {
+            PlayerMoney.Instance.SpendMoney(weaponCost); // Odeèti peníze
+            PlayerWeaponManager.Instance.EquipWeapon(weaponPrefabs[weaponIndex]); // Pøidej zbraò hráèi
+
+            UpdateMoneyUI(); // Aktualizace UI penìz
+            ShowFeedback("Weapon purchased: " + weaponPrefabs[weaponIndex].name, Color.green); // Zobrazení zpìtné vazby
         }
         else
         {
-            Debug.Log("Nemáš dost penìz!");
+            ShowFeedback("Not enough money to buy this weapon.", Color.red); // Zobrazení chyby
         }
     }
 
-    private void EquipWeapon(Weapon weapon)
+    private void UpdateMoneyUI()
     {
-        // Zkontroluj, zda je weaponPrefab pøiøazený
-        if (weapon.weaponPrefab == null)
+        if (moneyText != null)
         {
-            Debug.LogError($"Zbraò '{weapon.weaponName}' nemá pøiøazený weaponPrefab! Pøiøaï ho v inspektoru.");
-            return;
+            moneyText.text = "Money: $" + PlayerMoney.Instance.GetMoney();
         }
-
-        // Zkontroluj, zda je gunHolder pøiøazený
-        if (gunHolder == null)
+        else
         {
-            Debug.LogError("GunHolder není pøiøazen!");
-            return;
+            Debug.LogWarning("Money text UI is not assigned.");
         }
+    }
 
-        Debug.Log("EquipWeapon: gunHolder je pøiøazen, pøipojuji zbraò.");
+    private void ShowFeedback(string message, Color color)
+    {
+        if (feedbackText != null)
+        {
+            feedbackText.text = message;
+            feedbackText.color = color;
+            CancelInvoke(nameof(ClearFeedback)); // Zruší pøedchozí vymazání zprávy
+            Invoke(nameof(ClearFeedback), 3f); // Vymaže zprávu po 3 sekundách
+        }
+        else
+        {
+            Debug.LogWarning("Feedback text UI is not assigned.");
+        }
+    }
 
-        // Pøed pøiøazením nové zbranì zkontrolujeme, jestli už nìjakou máme
-        gunHolder.DetachGun(); // Odstraní aktuální zbraò, pokud existuje
+    private void ClearFeedback()
+    {
+        if (feedbackText != null)
+        {
+            feedbackText.text = "";
+        }
+    }
 
-        // Pøipojení nové zbranì na GunHolder
-        gunHolder.AttachGun(weapon.weaponPrefab);
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerInShopZone = true; // Hráè vstoupil do zóny obchodu
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerInShopZone = false; // Hráè opustil zónu obchodu
+            if (isShopOpen)
+            {
+                ToggleShopUI(); // Zavøi obchod, pokud byl otevøen
+            }
+        }
     }
 }
