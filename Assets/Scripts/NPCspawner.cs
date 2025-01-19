@@ -35,7 +35,7 @@ public class NPCSpawner : MonoBehaviour
                 GameObject npc = Instantiate(npcPrefab, spawnPosition, Quaternion.identity);
 
                 // Pøiøazení reference na hráèe
-                NPCFollower_withAnim followerScript = npc.GetComponent<NPCFollower_withAnim>();
+                NPCFollow followerScript = npc.GetComponent<NPCFollow>();
                 if (followerScript != null)
                 {
                     followerScript.player = player; // Pøiøazení hráèe

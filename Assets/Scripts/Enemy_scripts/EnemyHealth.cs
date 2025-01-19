@@ -8,43 +8,44 @@ public class Enemy : MonoBehaviour
 
     [Header("Damage Settings")]
     public int damageToPlayer = 10; // Poškození zpùsobené hráèi
-    public float damageCooldown = 1f; // Interval mezi útoky
     public float damageRange = 1.5f; // Maximální vzdálenost k hráèi pro útok
+    public float damageInterval = 1.0f; // Interval mezi útoky (v sekundách)
 
     private Transform player; // Odkaz na hráèe
-    private float lastDamageTime; // Èas posledního útoku
+    private bool isPlayerInRange = false; // Kontroluje, zda je hráè v dosahu
+    private float lastDamageTime; // Èas posledního poškození
 
     void Start()
     {
         currentHealth = maxHealth; // Inicializace zdraví
-        player = GameObject.FindGameObjectWithTag("Player").transform; // Najdi hráèe podle tagu
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+        {
+            player = playerObject.transform; // Najdi hráèe podle tagu
+        }
+        else
+        {
+            Debug.LogWarning("Player not found! Make sure the player has the 'Player' tag.");
+        }
     }
 
     void Update()
     {
         if (player != null)
         {
-            float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+            isPlayerInRange = distanceToPlayer <= damageRange;
 
-            // Pokud je hráè v dosahu, proveï útok
-            if (distanceToPlayer <= damageRange)
+            if (isPlayerInRange && Time.time >= lastDamageTime + damageInterval)
             {
-                TryDamagePlayer();
+                PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(damageToPlayer); // Zpùsob poškození hráèi
+                    Debug.Log("Enemy damaged player over time!");
+                    lastDamageTime = Time.time;
+                }
             }
-        }
-    }
-
-    private void TryDamagePlayer()
-    {
-        if (Time.time >= lastDamageTime + damageCooldown)
-        {
-            PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(damageToPlayer);
-                Debug.Log("Enemy damaged player for: " + damageToPlayer);
-            }
-            lastDamageTime = Time.time;
         }
     }
 

@@ -1,30 +1,47 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 public class MonsterSpawner : MonoBehaviour
 {
-    public GameObject monsterPrefab; // Prefab monstera
-    public float spawnDistance = 10f; // Vzdálenost od okrajù kamery pro spawn
-    public float spawnInterval = 3f; // Interval mezi spawnováním monster
-    public int maxMonsters = 10;     // Maximální poèet monster ve scénì
-    public Tilemap grassTilemap;     // Tilemap, kde se monstra mohou spawnovat
+    public List<GameObject> monsterPrefabs; // Seznam rùzných prefabrikátù monster
+    public float spawnDistance = 10f;       // Vzdálenost od okrajù kamery pro spawn
+    public float spawnInterval = 3f;       // Interval mezi spawnováním monster
+    public int maxMonsters = 10;           // Maximální poèet monster ve scénì
+    public float increaseInterval = 30f;  // Interval pro zvyšování maximálního poètu monster
+    public Tilemap grassTilemap;           // Tilemap, kde se monstra mohou spawnovat
 
     private Camera mainCamera;
     private float nextSpawnTime;
+    private float nextIncreaseTime;
 
     void Start()
     {
         mainCamera = Camera.main;
         nextSpawnTime = Time.time + spawnInterval;
+        nextIncreaseTime = Time.time + increaseInterval;
 
         if (grassTilemap == null)
         {
             Debug.LogError("Tilemap pro trávu není pøiøazená! Monstra se nebudou spawnovat správnì.");
         }
+
+        if (monsterPrefabs == null || monsterPrefabs.Count == 0)
+        {
+            Debug.LogError("Seznam monster je prázdný! Pøidejte alespoò jedno monstrum do seznamu.");
+        }
     }
 
     void Update()
     {
+        // Zvyšování maximálního poètu monster
+        if (Time.time >= nextIncreaseTime)
+        {
+            maxMonsters++;
+            nextIncreaseTime = Time.time + increaseInterval;
+            Debug.Log($"Maximální poèet monster zvýšen na {maxMonsters}.");
+        }
+
         // Spawnuj monstra, pokud je to èasovì vhodné a nepøekroèen limit
         if (Time.time >= nextSpawnTime && CountMonsters() < maxMonsters)
         {
@@ -46,7 +63,7 @@ public class MonsterSpawner : MonoBehaviour
         float halfHeight = mainCamera.orthographicSize;
         float halfWidth = mainCamera.aspect * halfHeight;
 
-        // Náhodný výbìr strany, kde se monstrum spawnuje (0 = nahoøe, 1 = dole, 2 = vlevo, 3 = vpravo)
+        // Náhodný výbìr strany, kde se monstrum spawnuje
         int spawnSide = Random.Range(0, 4);
 
         Vector3 spawnPosition = Vector3.zero;
@@ -88,7 +105,9 @@ public class MonsterSpawner : MonoBehaviour
         // Kontrola, zda je na Tilemapì tráva
         if (grassTilemap.HasTile(tilePosition))
         {
-            Instantiate(monsterPrefab, spawnPosition, Quaternion.identity);
+            // Náhodný výbìr typu monstra
+            GameObject randomMonster = monsterPrefabs[Random.Range(0, monsterPrefabs.Count)];
+            Instantiate(randomMonster, spawnPosition, Quaternion.identity);
         }
         else
         {

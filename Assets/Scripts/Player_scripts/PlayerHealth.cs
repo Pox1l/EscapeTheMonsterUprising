@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class PlayerHealth : MonoBehaviour
     private int currentHealth; // Aktuální HP
 
     private TextMeshProUGUI healthText; // TextMeshPro pro zobrazení HP
+    private Slider healthSlider; // Slider pro vizuální zobrazení HP
 
     private void Awake()
     {
@@ -26,6 +28,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Start()
     {
+        // Inicializujeme zdraví na základì toho, zda už bylo nastaveno pøi naètení scény
         if (currentHealth == 0) // Nastaví zdraví pouze pøi prvním spuštìní
         {
             currentHealth = maxHealth;
@@ -50,7 +53,22 @@ public class PlayerHealth : MonoBehaviour
             Debug.LogWarning("HealthText objekt nebyl nalezen ve scénì!");
         }
 
-        UpdateHealthUI(); // Aktualizuje UI, pokud je nalezen
+        GameObject healthSliderObject = GameObject.Find("HealthSlider");
+        if (healthSliderObject != null)
+        {
+            healthSlider = healthSliderObject.GetComponent<Slider>();
+            Debug.Log("healthSlider byl nalezen a pøiøazen!");
+
+            // Inicializuje hodnoty slideru
+            healthSlider.maxValue = maxHealth;
+            healthSlider.value = currentHealth;
+        }
+        else
+        {
+            Debug.LogWarning("HealthSlider objekt nebyl nalezen ve scénì!");
+        }
+
+        UpdateHealthUI(); // Aktualizuje UI, pokud jsou objekty nalezeny
     }
 
     public void TakeDamage(int damage)
@@ -83,6 +101,15 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             Debug.LogWarning("healthText není pøiøazen!");
+        }
+
+        if (healthSlider != null)
+        {
+            healthSlider.value = currentHealth;
+        }
+        else
+        {
+            Debug.LogWarning("healthSlider není pøiøazen!");
         }
     }
 

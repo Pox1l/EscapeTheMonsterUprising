@@ -9,6 +9,8 @@ TagManager:
   - Tree
   - EntryPoint
   - NPC
+  - Bullet
+  - Hatch
   layers:
   - Default
   - TransparentFX

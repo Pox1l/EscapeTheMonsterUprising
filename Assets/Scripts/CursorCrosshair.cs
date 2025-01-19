@@ -15,6 +15,10 @@ public class CursorCrosshair : MonoBehaviour
     {
         Vector2 mouseCursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         transform.position = mouseCursorPos;
-    }
 
+        // Zajistí, že kurzor je vždy nad ostatními UI prvky
+        Vector3 cursorPos = transform.position;
+        cursorPos.z = 0; // Pokud je používán Canvas, z-index by mìl být na nule
+        transform.position = cursorPos;
+    }
 }

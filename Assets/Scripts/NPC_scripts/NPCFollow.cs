@@ -1,40 +1,38 @@
 using UnityEngine;
-using TMPro; // Required for TextMeshPro
+using TMPro;
 
-public class NPCFollower_withAnim : MonoBehaviour
+public class NPCFollow : MonoBehaviour
 {
-    public Transform player; // Assign the player's transform in the Inspector
-    public float followSpeed = 3f; // Speed at which NPC follows the player
-    public Vector2 rightTopOffset = new Vector2(1f, 1f); // Offset for the right-top position
-    public Vector2 leftTopOffset = new Vector2(-1f, 1f); // Offset for the left-top position
-    private Vector2 assignedOffset; // Dynamically assigned offset when starting to follow
+    public Transform player; // Hráèùv Transform
+    public float followSpeed = 3f; // Rychlost sledování
+    public Vector2 rightTopOffset = new Vector2(1f, 1f);
+    public Vector2 leftTopOffset = new Vector2(-1f, 1f);
+    private Vector2 assignedOffset;
     private bool isFollowing = false;
     private bool inRange = false;
 
-    private Animator animator; // Reference to the Animator component
+    private Animator animator;
+    public static int followingNPCCount = 0;
+    private const int maxFollowingNPCs = 2;
 
-    public static int followingNPCCount = 0; // Tracks the number of NPCs currently following the player
-    private const int maxFollowingNPCs = 2; // Maximum number of NPCs that can follow the player
-
-    public TextMeshProUGUI npcCountText; // TextMeshPro component for displaying the count of following NPCs
+    public TextMeshProUGUI npcCountText;
+    private HatchManager hatchManager; // Odkaz na HatchManager
 
     private void Start()
     {
         animator = GetComponent<Animator>();
-        FindPlayer(); // Try to find the player at the start
-        UpdateNPCCountUI(); // Update UI at the start
+        FindPlayer();
+        UpdateNPCCountUI();
     }
 
     private void Update()
     {
-        // If player is null, try to find them
         if (player == null)
         {
             FindPlayer();
             return;
         }
 
-        // Toggle following state when pressing 'E' in range
         if (inRange && Input.GetKeyDown(KeyCode.E))
         {
             if (isFollowing)
@@ -51,14 +49,13 @@ public class NPCFollower_withAnim : MonoBehaviour
             }
         }
 
-        // Follow player and update animation parameters if following
         if (isFollowing)
         {
             FollowPlayer();
         }
         else
         {
-            animator.SetFloat("Speed", 0); // Stop animation when not following
+            animator.SetFloat("Speed", 0);
         }
     }
 
@@ -124,6 +121,12 @@ public class NPCFollower_withAnim : MonoBehaviour
             Debug.Log("Player entered interaction range.");
             inRange = true;
         }
+
+        // Pokud NPC vstoupí do bunkru
+        if (collider2D.CompareTag("Hatch") && isFollowing)
+        {
+            RescueNPC();
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collider2D)
@@ -134,6 +137,26 @@ public class NPCFollower_withAnim : MonoBehaviour
             inRange = false;
         }
     }
+
+    private void RescueNPC()
+    {
+        Debug.Log($"NPC {gameObject.name} zachránìno!");
+        isFollowing = false; // Pøestane sledovat hráèe
+        followingNPCCount--; // Snížení poètu sledujících NPC
+        UpdateNPCCountUI(); // Aktualizace UI
+
+        hatchManager = FindObjectOfType<HatchManager>();
+        if (hatchManager != null)
+        {
+            hatchManager.AddRescuedNPC();
+        }
+
+        // Pøidání penìz hráèi po zachránìní NPC
+        PlayerMoney.Instance.AddMoney(50); // Pøedpokládané množství penìz, které se pøidá za zachránìné NPC
+
+        Destroy(gameObject); // NPC zmizí
+    }
+
 
     private void FindPlayer()
     {
