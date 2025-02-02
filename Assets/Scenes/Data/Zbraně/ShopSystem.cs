@@ -1,5 +1,5 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class ShopSystem : MonoBehaviour
 {
@@ -8,16 +8,19 @@ public class ShopSystem : MonoBehaviour
     [SerializeField] private TMP_Text moneyText; // TextMeshPro pro zobrazení aktuálních penìz
     [SerializeField] private TMP_Text feedbackText; // TextMeshPro pro zpìtnou vazbu hráèi
     [SerializeField] private GameObject shopUI; // UI panel obchodu
+    [SerializeField] private TMP_Text[] weaponButtons; // Texty tlaèítek v obchodì
 
-    private bool isShopOpen = false; // Sledování stavu otevøeného obchodu
-    private bool playerInShopZone = false; // Kontrola, zda je hráè v zónì obchodu
+    private bool isShopOpen = false;
+    private bool playerInShopZone = false;
 
     private void Start()
     {
-        UpdateMoneyUI(); // Aktualizace zobrazení penìz na zaèátku
+        UpdateMoneyUI();
+        UpdateShopUI();
+
         if (shopUI != null)
         {
-            shopUI.SetActive(false); // Ujistíme se, že je obchod na zaèátku skrytý
+            shopUI.SetActive(false);
         }
         else
         {
@@ -27,10 +30,9 @@ public class ShopSystem : MonoBehaviour
 
     private void Update()
     {
-        // Zkontroluj stisknutí klávesy E pouze pokud je hráè v zónì obchodu
         if (Input.GetKeyDown(KeyCode.E) && playerInShopZone)
         {
-            ToggleShopUI(); // Otevøe nebo zavøe obchod
+            ToggleShopUI();
         }
     }
 
@@ -39,17 +41,8 @@ public class ShopSystem : MonoBehaviour
         if (shopUI != null)
         {
             isShopOpen = !isShopOpen;
-            shopUI.SetActive(isShopOpen); // Pøepínání viditelnosti obchodu
-            // Místo nastavování timeScale na 0 použijeme unscaledTime pro správné ovládání UI bez zpomalení hry
-            if (isShopOpen)
-            {
-                Time.timeScale = 1; // Keep the game running normally
-                Time.fixedDeltaTime = 0.02f * Time.timeScale; // Ensure physics runs smoothly
-            }
-            else
-            {
-                Time.timeScale = 1; // Restore normal time flow when the shop is closed
-            }
+            shopUI.SetActive(isShopOpen);
+            UpdateShopUI(); // Aktualizuj tlaèítka pøi otevøení obchodu
         }
         else
         {
@@ -65,19 +58,58 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        int weaponCost = weaponCosts[weaponIndex];
+        GameObject weaponPrefab = weaponPrefabs[weaponIndex];
+        string weaponName = weaponPrefab.name;
 
-        if (PlayerMoney.Instance.HasEnoughMoney(weaponCost))
+        if (PlayerWeaponManager.Instance.IsWeaponPurchased(weaponName))
         {
-            PlayerMoney.Instance.SpendMoney(weaponCost); // Odeèti peníze
-            PlayerWeaponManager.Instance.EquipWeapon(weaponPrefabs[weaponIndex]); // Pøidej zbraò hráèi
-
-            UpdateMoneyUI(); // Aktualizace UI penìz
-            ShowFeedback("Weapon purchased: " + weaponPrefabs[weaponIndex].name, Color.green); // Zobrazení zpìtné vazby
+            PlayerWeaponManager.Instance.EquipWeapon(weaponPrefab);
+            ShowFeedback("Weapon equipped: " + weaponName, Color.green);
         }
         else
         {
-            ShowFeedback("Not enough money to buy this weapon.", Color.red); // Zobrazení chyby
+            int weaponCost = weaponCosts[weaponIndex];
+            if (PlayerMoney.Instance.HasEnoughMoney(weaponCost))
+            {
+                PlayerMoney.Instance.SpendMoney(weaponCost);
+                PlayerWeaponManager.Instance.PurchaseWeapon(weaponName);
+                PlayerWeaponManager.Instance.EquipWeapon(weaponPrefab);
+
+                UpdateMoneyUI();
+                UpdateShopUI();
+                ShowFeedback("Weapon purchased: " + weaponName, Color.green);
+            }
+            else
+            {
+                ShowFeedback("Not enough money to buy this weapon.", Color.red);
+            }
+        }
+    }
+
+    private void UpdateShopUI()
+    {
+        for (int i = 0; i < weaponPrefabs.Length; i++)
+        {
+            if (weaponButtons[i] != null)
+            {
+                string weaponName = weaponPrefabs[i].name;
+
+                if (PlayerWeaponManager.Instance.IsWeaponPurchased(weaponName))
+                {
+                    if (PlayerWeaponManager.Instance.IsWeaponEquipped(weaponName))
+                    {
+                        weaponButtons[i].text = "Equipped";
+                    }
+                    else
+                    {
+                        weaponButtons[i].text = "Owned";
+                    }
+                }
+                else
+                {
+                    weaponButtons[i].text = "Buy " + weaponCosts[i];
+                }
+            }
         }
     }
 
@@ -99,8 +131,8 @@ public class ShopSystem : MonoBehaviour
         {
             feedbackText.text = message;
             feedbackText.color = color;
-            CancelInvoke(nameof(ClearFeedback)); // Zruší pøedchozí vymazání zprávy
-            Invoke(nameof(ClearFeedback), 3f); // Vymaže zprávu po 3 sekundách
+            CancelInvoke(nameof(ClearFeedback));
+            Invoke(nameof(ClearFeedback), 3f);
         }
         else
         {
@@ -120,7 +152,7 @@ public class ShopSystem : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            playerInShopZone = true; // Hráè vstoupil do zóny obchodu
+            playerInShopZone = true;
         }
     }
 
@@ -128,10 +160,10 @@ public class ShopSystem : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            playerInShopZone = false; // Hráè opustil zónu obchodu
+            playerInShopZone = false;
             if (isShopOpen)
             {
-                ToggleShopUI(); // Zavøi obchod, pokud byl otevøen
+                ToggleShopUI();
             }
         }
     }

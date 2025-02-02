@@ -236,3 +236,8 @@ MonoBehaviour:
   maxHealth: 75
   damageToPlayer: 15
   damageRange: 2
+  damageInterval: 1
+  isSpider: 0
+  isBig: 1
+  isFat: 0
+  isLittle: 0
