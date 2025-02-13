@@ -9,8 +9,8 @@ public class PauseMenu : MonoBehaviour
     public static bool GameIsPaused = false;
 
     public GameObject pauseMenuUI;
+    public string tagToDestroyInMenu = "Player";
 
-   
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -42,6 +42,7 @@ public class PauseMenu : MonoBehaviour
     public void LoadMenu()
     {
         Time.timeScale = 1f;
+        DestroyObjectByTag(tagToDestroyInMenu);
         SceneManager.LoadScene("Menu");
     }
     public void Quit() 
@@ -50,4 +51,18 @@ public class PauseMenu : MonoBehaviour
         Application.Quit();
     }
 
+
+    private void DestroyObjectByTag(string tag)
+    {
+        GameObject objectToDestroy = GameObject.FindGameObjectWithTag(tag);
+        if (objectToDestroy != null)
+        {
+            Destroy(objectToDestroy);
+            Debug.Log($"Destroyed object with tag {tag}");
+        }
+        else
+        {
+            Debug.Log($"No object found with tag {tag}.");
+        }
+    }
 }

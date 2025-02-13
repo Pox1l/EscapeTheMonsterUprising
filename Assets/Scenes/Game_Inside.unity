@@ -727,6 +727,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4087574997124009306, guid: 6005f699cd180db458f53a122b7269a0, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4172907397696728384, guid: 6005f699cd180db458f53a122b7269a0, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4324326123697017982, guid: 6005f699cd180db458f53a122b7269a0, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -1208,6 +1216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pauseMenuUI: {fileID: 792128039}
+  tagToDestroyInMenu: Player
 --- !u!114 &238859434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5490,7 +5499,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!95 &792128040
 Animator:
   serializedVersion: 5

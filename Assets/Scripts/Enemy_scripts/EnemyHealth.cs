@@ -48,10 +48,6 @@ public class Enemy : MonoBehaviour
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(damageToPlayer); // Zpùsob poškození hráèi
-
-                    // Aplikování efektù podle typu monstra
-                    ApplyMonsterEffects(playerHealth);
-
                     Debug.Log("Enemy damaged player over time!");
                     lastDamageTime = Time.time;
                 }
@@ -74,31 +70,5 @@ public class Enemy : MonoBehaviour
     {
         Debug.Log("Enemy has died!");
         Destroy(gameObject); // Odstraní nepøítele ze scény
-    }
-
-    private void ApplyMonsterEffects(PlayerHealth playerHealth)
-    {
-        if (isSpider)
-        {
-            float poisonDuration = 5f; // Délka trvání otravy
-            playerHealth.ApplyPoisonEffect(poisonDuration); // Efekt otravy pro pavouky
-        }
-
-        if (isBig)
-        {
-            float slowDuration = 3f; // Délka trvání zpomalení
-            playerHealth.ApplySlowEffect(slowDuration); // Efekt zpomalení pro velké monstra
-        }
-
-        if (isFat)
-        {
-            float bleedDuration = 5f; // Délka trvání krvácení
-            playerHealth.ApplyBleedEffect(bleedDuration); // Efekt krvácení pro tlustá monstra
-        }
-
-        if (isLittle)
-        {
-            // Mùžete pøidat vlastní efekt pro malá monstra, pokud chcete
-        }
     }
 }
