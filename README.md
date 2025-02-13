@@ -10,7 +10,7 @@
   - Use earned resources to buy weapons and upgrade stats
 
 - [x] Project upload
-- [ ] Create game
+- [X] Create game
 - [ ] Export project
 
 > [!IMPORTANT]
