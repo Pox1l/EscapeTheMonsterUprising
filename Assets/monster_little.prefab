@@ -180,8 +180,8 @@ CapsuleCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.007448703, y: -0.5338268}
-  m_Size: {x: 0.7436449, y: 1.0117998}
+  m_Offset: {x: -0.007448703, y: -0.5957912}
+  m_Size: {x: 0.7436449, y: 0.887871}
   m_Direction: 0
 --- !u!50 &7043808706482113845
 Rigidbody2D:
@@ -245,7 +245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 50
   damageToPlayer: 10
-  damageRange: 1.5
+  damageRange: 1
   damageInterval: 1
   isSpider: 0
   isBig: 0

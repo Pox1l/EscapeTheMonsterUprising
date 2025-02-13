@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 using System.IO;
 
 public class PlayerMoney : MonoBehaviour
@@ -9,6 +10,8 @@ public class PlayerMoney : MonoBehaviour
     private int currentMoney;
     private string savePath;
 
+    private TextMeshProUGUI moneyText; // UI prvek pro zobrazení penìz
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -18,10 +21,16 @@ public class PlayerMoney : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject); // Pøetrvá mezi scénami
+        DontDestroyOnLoad(gameObject);
 
         savePath = Path.Combine(Application.persistentDataPath, "moneyData.json");
         LoadMoney();
+    }
+
+    private void Start()
+    {
+        FindMoneyUI();
+        UpdateMoneyUI();
     }
 
     private void OnApplicationQuit()
@@ -45,6 +54,7 @@ public class PlayerMoney : MonoBehaviour
         {
             currentMoney -= amount;
             Debug.Log("Money spent: " + amount + ". Remaining: " + currentMoney);
+            UpdateMoneyUI();
             SaveMoney();
         }
         else
@@ -57,6 +67,7 @@ public class PlayerMoney : MonoBehaviour
     {
         currentMoney += amount;
         Debug.Log("Money added: " + amount + ". Total: " + currentMoney);
+        UpdateMoneyUI();
         SaveMoney();
     }
 
@@ -80,6 +91,25 @@ public class PlayerMoney : MonoBehaviour
             currentMoney = startingMoney;
         }
         Debug.Log("Money loaded: " + currentMoney);
+    }
+
+    private void UpdateMoneyUI()
+    {
+        if (moneyText == null) FindMoneyUI();
+
+        if (moneyText != null)
+        {
+            moneyText.text = "Money: " + currentMoney;
+        }
+    }
+
+    private void FindMoneyUI()
+    {
+        GameObject moneyTextObject = GameObject.Find("MoneyText"); // Najde objekt podle jména
+        if (moneyTextObject != null)
+        {
+            moneyText = moneyTextObject.GetComponent<TextMeshProUGUI>();
+        }
     }
 
     [System.Serializable]

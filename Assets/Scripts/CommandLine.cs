@@ -1,5 +1,5 @@
 using UnityEngine;
-using TMPro; // Importuj TextMeshPro namespace
+using TMPro; // Importuje TextMeshPro namespace
 
 public class CommandLine : MonoBehaviour
 {
@@ -11,71 +11,91 @@ public class CommandLine : MonoBehaviour
 
     void Awake()
     {
-        // Pokud instance není nastavena, nastavíme ji a zachováme objekt mezi scénami
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // Zachová objekt mezi scénami
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject); // Znièí duplikáty objektu
+            Destroy(gameObject);
         }
     }
 
     void Update()
     {
-        // Tlaèítko pro zapnutí/vypnutí command line (stisk klávesy P)
-        if (Input.GetKeyDown(KeyCode.P)) // Zmìnìno na P
+        if (Input.GetKeyDown(KeyCode.P))
         {
-            ToggleCommandLine(); // Zapne nebo vypne command line
+            ToggleCommandLine();
         }
 
-        // Pokud je command line aktivní a stiskneš Enter, vykoná pøíkaz
         if (isCommandLineActive && Input.GetKeyDown(KeyCode.Return))
         {
-            ExecuteCommand(inputField.text); // Vykoná pøíkaz bez zavøení command line
+            ExecuteCommand(inputField.text.Trim()); // Odebere mezery kolem textu
         }
     }
 
-    // Funkce pro zapnutí/vypnutí command line
     void ToggleCommandLine()
     {
-        isCommandLineActive = !isCommandLineActive; // Pøepnutí stavu
-        commandLineUI.SetActive(isCommandLineActive); // Zobrazí nebo skryje command line
-
-        Debug.Log("Command line active: " + isCommandLineActive); // Debugging
+        isCommandLineActive = !isCommandLineActive;
+        commandLineUI.SetActive(isCommandLineActive);
 
         if (isCommandLineActive)
         {
-            inputField.ActivateInputField(); // Aktivuje InputField pro zadávání
-            inputField.text = ""; // Vymaže text pøi otevøení command line
+            inputField.ActivateInputField();
+            inputField.text = "";
         }
         else
         {
-            inputField.DeactivateInputField(); // Deaktivuje InputField
+            inputField.DeactivateInputField();
         }
     }
 
-    // Funkce pro vykonání pøíkazu
     void ExecuteCommand(string command)
     {
-        if (command == "clear")
-        {
-            inputField.text = ""; // Vymaže text
-            Debug.Log("Command cleared"); // Vypíše v logu, že byla vymazána
-        }
-        else if (command == "heal")
-        {
-            // Zavolá metodu Heal na instanci PlayerHealth pro uzdravení hráèe
-            PlayerHealth.Instance.Heal(10); // Uzdraví hráèe o 10 bodù (mùžeš upravit hodnotu)
-            Debug.Log("Player healed!"); // Vypíše v logu, že postava byla uzdravena
-        }
-        else
-        {
-            Debug.Log("Unknown command: " + command); // Vypíše v logu neznámý pøíkaz
-        }
+        if (string.IsNullOrEmpty(command)) return;
 
-        // Command line zùstane otevøená, neprovádí se Toggle
+        switch (command.ToLower())
+        {
+            case "heal":
+                if (PlayerHealth.Instance != null)
+                {
+                    PlayerHealth.Instance.Heal(10);
+                    Debug.Log("Player healed by 10 HP!");
+                }
+                else
+                {
+                    Debug.LogError("PlayerHealth instance not found!");
+                }
+                break;
+
+            case "money":
+                if (PlayerMoney.Instance != null)
+                {
+                    PlayerMoney.Instance.AddMoney(50);
+                    Debug.Log("Added 50 money!");
+                }
+                else
+                {
+                    Debug.LogError("PlayerMoney instance not found!");
+                }
+                break;
+
+            case "dmg":
+                if (PlayerHealth.Instance != null)
+                {
+                    PlayerHealth.Instance.TakeDamage(10);
+                    Debug.Log("Player took 10 damage!");
+                }
+                else
+                {
+                    Debug.LogError("PlayerHealth instance not found!");
+                }
+                break;
+
+            default:
+                Debug.Log("Unknown command: " + command);
+                break;
+        }
     }
 }

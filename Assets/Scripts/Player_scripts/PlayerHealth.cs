@@ -2,6 +2,8 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
+using System.Threading.Tasks;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -14,6 +16,7 @@ public class PlayerHealth : MonoBehaviour
     private Slider healthSlider;
 
     public int CurrentHealth => currentHealth; // Získání aktuálního zdraví
+    private string filePath;
 
     private void Awake()
     {
@@ -26,16 +29,21 @@ public class PlayerHealth : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        filePath = Path.Combine(Application.persistentDataPath, "playerHealth.json"); // Uložení cesty pro soubor
     }
 
     private void Start()
     {
+        LoadHealth(); // Naèítání zdraví pøi startu
+
         if (currentHealth == 0)
         {
             currentHealth = maxHealth;
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
+        OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
     public void SetHealth(int health)
@@ -70,6 +78,12 @@ public class PlayerHealth : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
+        if (currentHealth != lastHealth) // Ukládáme pouze pokud došlo ke zmìnì
+        {
+            SaveHealthAsync(); // Asynchronní uložení zdraví
+            lastHealth = currentHealth; // Uložení aktuálního zdraví pro srovnání
+        }
+
         UpdateHealthUI();
 
         if (currentHealth <= 0)
@@ -82,6 +96,12 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth += healAmount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        if (currentHealth != lastHealth) // Ukládáme pouze pokud došlo ke zmìnì
+        {
+            SaveHealthAsync(); // Asynchronní uložení zdraví
+            lastHealth = currentHealth; // Uložení aktuálního zdraví pro srovnání
+        }
 
         UpdateHealthUI();
     }
@@ -103,4 +123,46 @@ public class PlayerHealth : MonoBehaviour
     {
         Debug.Log("Player has died!");
     }
+
+    // Asynchronní uložení zdraví do souboru JSON
+    private async void SaveHealthAsync()
+    {
+        PlayerHealthData data = new PlayerHealthData();
+        data.health = currentHealth;
+
+        string json = JsonUtility.ToJson(data);
+
+        // Asynchronní zápis do souboru
+        await Task.Run(() => File.WriteAllText(filePath, json));
+    }
+
+    // Naètení zdraví ze souboru JSON
+    private void LoadHealth()
+    {
+        if (File.Exists(filePath))
+        {
+            string json = File.ReadAllText(filePath);
+            PlayerHealthData data = JsonUtility.FromJson<PlayerHealthData>(json);
+            currentHealth = data.health;
+        }
+        else
+        {
+            currentHealth = maxHealth; // Pokud soubor neexistuje, nastavíme základní hodnotu
+        }
+    }
+
+    // Pomocná tøída pro uložení zdraví
+    [System.Serializable]
+    public class PlayerHealthData
+    {
+        public int health;
+    }
+
+    // Zavoláme uložení zdraví pøi ukonèení aplikace
+    private void OnApplicationQuit()
+    {
+        SaveHealthAsync(); // Asynchronní uložení pøi ukonèení aplikace
+    }
+
+    private int lastHealth = -1; // Pomocná promìnná pro porovnání zdraví
 }

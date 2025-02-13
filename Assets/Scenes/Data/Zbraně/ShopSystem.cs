@@ -3,12 +3,13 @@ using UnityEngine;
 
 public class ShopSystem : MonoBehaviour
 {
-    [SerializeField] private GameObject[] weaponPrefabs; // Prefaby dostupných zbraní
-    [SerializeField] private int[] weaponCosts; // Ceny jednotlivých zbraní
-    [SerializeField] private TMP_Text moneyText; // TextMeshPro pro zobrazení aktuálních penìz
-    [SerializeField] private TMP_Text feedbackText; // TextMeshPro pro zpìtnou vazbu hráèi
-    [SerializeField] private GameObject shopUI; // UI panel obchodu
-    [SerializeField] private TMP_Text[] weaponButtons; // Texty tlaèítek v obchodì
+    [SerializeField] private GameObject[] weaponPrefabs;
+    [SerializeField] private int[] weaponCosts;
+    [SerializeField] private TMP_Text moneyText;
+    [SerializeField] private TMP_Text feedbackText;
+    [SerializeField] private GameObject shopUI;
+    [SerializeField] private TMP_Text[] weaponButtons;
+    [SerializeField] private int healCost = 25; // Cena za heal
 
     private bool isShopOpen = false;
     private bool playerInShopZone = false;
@@ -42,7 +43,7 @@ public class ShopSystem : MonoBehaviour
         {
             isShopOpen = !isShopOpen;
             shopUI.SetActive(isShopOpen);
-            UpdateShopUI(); // Aktualizuj tlaèítka pøi otevøení obchodu
+            UpdateShopUI();
         }
         else
         {
@@ -85,6 +86,30 @@ public class ShopSystem : MonoBehaviour
             }
         }
     }
+
+    public void BuyHeal()
+    {
+        if (PlayerHealth.Instance.CurrentHealth >= PlayerHealth.Instance.maxHealth)
+        {
+            ShowFeedback("You already have full HP!", Color.yellow);
+            return;
+        }
+
+        if (PlayerMoney.Instance.HasEnoughMoney(healCost))
+        {
+            PlayerMoney.Instance.SpendMoney(healCost);
+            PlayerHealth.Instance.Heal(25);
+
+            UpdateMoneyUI();
+            ShowFeedback("Healed +25 HP!", Color.green);
+        }
+        else
+        {
+            ShowFeedback("Not enough money for heal.", Color.red);
+        }
+    }
+
+
 
     private void UpdateShopUI()
     {
