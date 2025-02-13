@@ -117,29 +117,30 @@ public class PlayerWeaponManager : MonoBehaviour
         }
     }
     private void RotateWeapon()
+{
+    // Získání pozice myši v herním svìtì
+    Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    mousePosition.z = 0f; // Ujistíme se, že souøadnice Z je 0
+
+    // Smìr od zbranì k myši
+    Vector3 direction = mousePosition - currentGun.transform.position;
+
+    // Výpoèet úhlu v radiánech a konverze na stupnì
+    float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+    // Rotace zbranì podle smìru myši
+    currentGun.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+    // Pokud je úhel vìtší než 90° nebo menší než -90°, pøeklopíme zbraò
+    if (angle > 90 || angle < -90)
     {
-        // Získání pozice myši v herním svìtì
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        // Smìr od zbranì k myši
-        Vector3 direction = (mousePosition - currentGun.transform.position).normalized;
-
-        // Získání úhlu mezi zbraní a myší
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        // Pokud je myš vlevo od hráèe, zrcadlit zbraò (flipnout podle X-osy)
-        if (mousePosition.x < transform.position.x)
-        {
-            currentGun.transform.localScale = new Vector3(1, 1, 1);
-        }
-        else
-        {
-            currentGun.transform.localScale = new Vector3(1, 1, 1);
-        }
-
-        // Rotace zbranì podle smìru myši
-        currentGun.transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+        currentGun.transform.localScale = new Vector3(1, -1, 1); // Flip Y
     }
+    else
+    {
+        currentGun.transform.localScale = new Vector3(1, 1, 1); // Normální smìr
+    }
+}
 }
 
 [System.Serializable]

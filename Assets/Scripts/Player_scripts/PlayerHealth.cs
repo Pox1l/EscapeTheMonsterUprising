@@ -6,83 +6,73 @@ using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public static PlayerHealth Instance; // Singleton instance
+    public static PlayerHealth Instance;
 
-    public int maxHealth = 100; // Maximální HP
-    private int currentHealth; // Aktuální HP
+    public int maxHealth = 100;
+    private int currentHealth;
 
-    private TextMeshProUGUI healthText; // TextMeshPro pro zobrazení HP
-    private Slider healthSlider; // Slider pro vizuální zobrazení HP
+    private TextMeshProUGUI healthText;
+    private Slider healthSlider;
 
-    // UI pro zobrazení efektù
-    public RawImage poisonIcon; // Ikona pro otravu
-    public RawImage bleedIcon; // Ikona pro krvácení
-    public RawImage slowIcon; // Ikona pro zpomalení
-    public TextMeshProUGUI poisonTimerText; // Text pro odpoèítávání otravy
-    public TextMeshProUGUI bleedTimerText; // Text pro odpoèítávání krvácení
-    public TextMeshProUGUI slowTimerText; // Text pro odpoèítávání zpomalení
+    public Image poisonIcon;
+    public Image bleedIcon;
+    public Image slowIcon;
+    public TextMeshProUGUI poisonTimerText;
+    public TextMeshProUGUI bleedTimerText;
+    public TextMeshProUGUI slowTimerText;
 
-    // Efekty
     private bool isPoisoned = false;
     private bool isBleeding = false;
     private bool isSlowed = false;
-    private float poisonTimer = 0f;
-    private float bleedTimer = 0f;
-    private float slowTimer = 0f;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Uchová objekt mezi scénami
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject); // Znièí duplicitní instance
+            Destroy(gameObject);
         }
     }
 
     private void Start()
     {
-        if (currentHealth == 0) // Nastaví zdraví pouze pøi prvním spuštìní
+        if (currentHealth == 0)
         {
             currentHealth = maxHealth;
         }
 
-        SceneManager.sceneLoaded += OnSceneLoaded; // Pøidá logiku pro naètení nové scény
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log($"Scéna naètena: {scene.name}");
 
+        if (scene.name == "Game_Inside") // Pokud jsme v lobby
+        {
+            ResetEffects(); // Reset efektù pøi návratu do lobby
+        }
+
         GameObject healthTextObject = GameObject.Find("HealthText");
         if (healthTextObject != null)
         {
             healthText = healthTextObject.GetComponent<TextMeshProUGUI>();
-            Debug.Log("healthText byl nalezen a pøiøazen!");
-        }
-        else
-        {
-            Debug.LogWarning("HealthText objekt nebyl nalezen ve scénì!");
         }
 
         GameObject healthSliderObject = GameObject.Find("HealthSlider");
         if (healthSliderObject != null)
         {
             healthSlider = healthSliderObject.GetComponent<Slider>();
-            Debug.Log("healthSlider byl nalezen a pøiøazen!");
-
             healthSlider.maxValue = maxHealth;
             healthSlider.value = currentHealth;
         }
-        else
-        {
-            Debug.LogWarning("HealthSlider objekt nebyl nalezen ve scénì!");
-        }
 
-        UpdateHealthUI(); // Aktualizuje UI
+        UpdateHealthUI();
+        UpdateEffectUI(); // Aktualizuje viditelnost efektù podle scény
     }
 
     public void TakeDamage(int damage)
@@ -112,18 +102,10 @@ public class PlayerHealth : MonoBehaviour
         {
             healthText.text = "HP: " + currentHealth;
         }
-        else
-        {
-            Debug.LogWarning("healthText není pøiøazen!");
-        }
 
         if (healthSlider != null)
         {
             healthSlider.value = currentHealth;
-        }
-        else
-        {
-            Debug.LogWarning("healthSlider není pøiøazen!");
         }
     }
 
@@ -134,13 +116,10 @@ public class PlayerHealth : MonoBehaviour
 
     public void ApplyPoisonEffect(float duration)
     {
-        if (poisonIcon == null || poisonTimerText == null) return; // Kontrola, zda existují UI elementy
-
         if (!isPoisoned)
         {
             isPoisoned = true;
-            poisonTimer = duration;
-            poisonIcon.gameObject.SetActive(true); // Zobrazí ikonu pro otravu
+            poisonIcon.gameObject.SetActive(true);
             StartCoroutine(PoisonDamage());
             StartCoroutine(PoisonTimer(duration));
         }
@@ -148,13 +127,10 @@ public class PlayerHealth : MonoBehaviour
 
     public void ApplyBleedEffect(float duration)
     {
-        if (bleedIcon == null || bleedTimerText == null) return; // Kontrola, zda existují UI elementy
-
         if (!isBleeding)
         {
             isBleeding = true;
-            bleedTimer = duration;
-            bleedIcon.gameObject.SetActive(true); // Zobrazí ikonu pro krvácení
+            bleedIcon.gameObject.SetActive(true);
             StartCoroutine(BleedDamage());
             StartCoroutine(BleedTimer(duration));
         }
@@ -162,13 +138,10 @@ public class PlayerHealth : MonoBehaviour
 
     public void ApplySlowEffect(float duration)
     {
-        if (slowIcon == null || slowTimerText == null) return; // Kontrola, zda existují UI elementy
-
         if (!isSlowed)
         {
             isSlowed = true;
-            slowTimer = duration;
-            slowIcon.gameObject.SetActive(true); // Zobrazí ikonu pro zpomalení
+            slowIcon.gameObject.SetActive(true);
             StartCoroutine(SlowEffect());
             StartCoroutine(SlowTimer(duration));
         }
@@ -178,7 +151,7 @@ public class PlayerHealth : MonoBehaviour
     {
         while (isPoisoned)
         {
-            currentHealth -= 2; // Poison damage
+            currentHealth -= 2;
             currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
             UpdateHealthUI();
             yield return new WaitForSeconds(1f);
@@ -189,7 +162,7 @@ public class PlayerHealth : MonoBehaviour
     {
         while (isBleeding)
         {
-            currentHealth -= 5; // Bleed damage
+            currentHealth -= 5;
             currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
             UpdateHealthUI();
             yield return new WaitForSeconds(1f);
@@ -200,11 +173,11 @@ public class PlayerHealth : MonoBehaviour
     {
         while (duration > 0)
         {
-            poisonTimerText.text = $"Poison: {Mathf.Ceil(duration)}s"; // Zobrazí èas otravy
+            poisonTimerText.text = $"Poison: {Mathf.Ceil(duration)}s";
             yield return new WaitForSeconds(1f);
             duration -= 1f;
         }
-        poisonIcon.gameObject.SetActive(false); // Skryje ikonu otravy po skonèení
+        poisonIcon.gameObject.SetActive(false);
         isPoisoned = false;
     }
 
@@ -212,11 +185,11 @@ public class PlayerHealth : MonoBehaviour
     {
         while (duration > 0)
         {
-            bleedTimerText.text = $"Bleed: {Mathf.Ceil(duration)}s"; // Zobrazí èas krvácení
+            bleedTimerText.text = $"Bleed: {Mathf.Ceil(duration)}s";
             yield return new WaitForSeconds(1f);
             duration -= 1f;
         }
-        bleedIcon.gameObject.SetActive(false); // Skryje ikonu krvácení po skonèení
+        bleedIcon.gameObject.SetActive(false);
         isBleeding = false;
     }
 
@@ -224,11 +197,11 @@ public class PlayerHealth : MonoBehaviour
     {
         while (duration > 0)
         {
-            slowTimerText.text = $"Slow: {Mathf.Ceil(duration)}s"; // Zobrazí èas zpomalení
+            slowTimerText.text = $"Slow: {Mathf.Ceil(duration)}s";
             yield return new WaitForSeconds(1f);
             duration -= 1f;
         }
-        slowIcon.gameObject.SetActive(false); // Skryje ikonu zpomalení po skonèení
+        slowIcon.gameObject.SetActive(false);
         isSlowed = false;
     }
 
@@ -236,20 +209,42 @@ public class PlayerHealth : MonoBehaviour
     {
         while (isSlowed)
         {
-            // Implementace zpomalení pohybu hráèe (napø. snížení rychlosti)
             yield return null;
         }
     }
 
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded; // Odhlásí událost pøi znièení objektu
-    }
-
-    public void StopEffects()
+    private void ResetEffects()
     {
         isPoisoned = false;
         isBleeding = false;
         isSlowed = false;
+
+        poisonIcon?.gameObject.SetActive(false);
+        bleedIcon?.gameObject.SetActive(false);
+        slowIcon?.gameObject.SetActive(false);
+
+        poisonTimerText?.SetText("");
+        bleedTimerText?.SetText("");
+        slowTimerText?.SetText("");
+
+        Debug.Log("Všechny efekty resetovány.");
+    }
+
+    private void UpdateEffectUI()
+    {
+        bool showEffects = SceneManager.GetActiveScene().name == "Game_Outside";
+
+        poisonIcon?.gameObject.SetActive(showEffects && isPoisoned);
+        bleedIcon?.gameObject.SetActive(showEffects && isBleeding);
+        slowIcon?.gameObject.SetActive(showEffects && isSlowed);
+
+        poisonTimerText?.gameObject.SetActive(showEffects);
+        bleedTimerText?.gameObject.SetActive(showEffects);
+        slowTimerText?.gameObject.SetActive(showEffects);
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }
