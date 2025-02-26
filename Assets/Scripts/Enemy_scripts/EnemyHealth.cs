@@ -21,6 +21,10 @@ public class Enemy : MonoBehaviour
     private bool isPlayerInRange = false; // Kontroluje, zda je hráè v dosahu
     private float lastDamageTime; // Èas posledního poškození
 
+    [Header("XP Settings")]
+    public GameObject xpPrefab; // Prefab XP, který se spawnuje pøi smrti
+
+
     void Start()
     {
         currentHealth = maxHealth; // Inicializace zdraví
@@ -48,7 +52,7 @@ public class Enemy : MonoBehaviour
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(damageToPlayer); // Zpùsob poškození hráèi
-                    Debug.Log("Enemy damaged player over time!");
+                   // Debug.Log("Enemy damaged player over time!");
                     lastDamageTime = Time.time;
                 }
             }
@@ -58,7 +62,7 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        Debug.Log("Enemy took damage: " + damage);
+        //Debug.Log("Enemy took damage: " + damage);
 
         if (currentHealth <= 0)
         {
@@ -68,7 +72,18 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("Enemy has died!");
+       // Debug.Log("Enemy has died!");
+
+        if (xpPrefab != null)
+        {
+            Instantiate(xpPrefab, transform.position, Quaternion.identity);
+        }
+        else
+        {
+            Debug.LogWarning("XP prefab is not assigned to enemy!");
+        }
+
         Destroy(gameObject); // Odstraní nepøítele ze scény
     }
+
 }

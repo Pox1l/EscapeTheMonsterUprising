@@ -241,3 +241,4 @@ MonoBehaviour:
   isBig: 0
   isFat: 0
   isLittle: 0
+  xpPrefab: {fileID: 8087026249706395546, guid: db19be3f6b5028f4badf724a2d658a3f, type: 3}
