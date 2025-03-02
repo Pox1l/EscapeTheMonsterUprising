@@ -102,7 +102,8 @@ MonoBehaviour:
   firePoint: {fileID: 6882739392578771927}
   fireRate: 0.5
   bulletSpeed: 10
-  bulletForce: 5
+  bulletLifeTime: 5
+  bulletDamage: 15
 --- !u!1 &1652306478863063867
 GameObject:
   m_ObjectHideFlags: 0

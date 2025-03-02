@@ -7,12 +7,12 @@ public class Gun : MonoBehaviour
     [SerializeField] private float fireRate = 0.5f; // Rychlost støelby (v sekundách)
     [SerializeField] private float bulletSpeed = 10f; // Rychlost støely
     [SerializeField] private float bulletLifeTime = 5f; // Doba života støely (v sekundách)
+    [SerializeField] private int bulletDamage = 10; // Poškození støely
 
     private float nextFireTime; // Èas další støelby
 
     void Update()
     {
-        // Støelba pøi držení levého tlaèítka myši
         if (Input.GetMouseButton(0) && Time.time >= nextFireTime)
         {
             Shoot();
@@ -27,24 +27,23 @@ public class Gun : MonoBehaviour
             return;
         }
 
-        // Vytvoø støelu
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-
-        // Otoè kulku o 90 stupòù na ose Z
         bullet.transform.Rotate(0, 0, -90);
 
-        // Pøidej pohyb støele
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // Nastav rychlost støely podle smìru firePoint
             rb.velocity = firePoint.right * bulletSpeed;
         }
 
-        // Zniè støelu po urèité dobì
-        Destroy(bullet, bulletLifeTime);
+        // Nastav damage støely
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        if (bulletScript != null)
+        {
+            bulletScript.damage = bulletDamage;
+        }
 
-        // Nastav èas další støelby
+        Destroy(bullet, bulletLifeTime);
         nextFireTime = Time.time + fireRate;
     }
 }
