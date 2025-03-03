@@ -1,38 +1,53 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyController : MonoBehaviour
 {
     private Transform target; // Cíl (hráè)
-    public float speed; // Rychlost nepøítele
+    private NavMeshAgent agent; // NavMeshAgent pro pathfinding
     private Animator animator; // Animator pro pohyb animací
+
+    [SerializeField] private float moveSpeed = 2f; // Nastavitelná rychlost v Inspectoru
 
     void Start()
     {
         animator = GetComponent<Animator>();
-        FindPlayer(); // Najde hráèe pøi spuštìní
+        agent = GetComponent<NavMeshAgent>();
+
+        if (agent == null)
+        {
+            Debug.LogError("Chybí NavMeshAgent na " + gameObject.name);
+            return;
+        }
+
+        // Umožní správné fungování v 2D
+        agent.updateRotation = false;
+        agent.updateUpAxis = false;
+
+        // Nastavení rychlosti podle Inspectoru
+        agent.speed = moveSpeed;
+
+        FindPlayer();
     }
 
     void Update()
     {
         if (target == null)
         {
-            FindPlayer(); // Pokud target (hráè) zmizí, zkusí ho znovu najít
-            return; // Poèkej na další frame
+            FindPlayer();
+            return;
         }
 
-        // Pohyb nepøítele smìrem k hráèi
-        Vector2 direction = (target.position - transform.position).normalized;
-        float distance = Vector2.Distance(target.position, transform.position);
+        // Nastaví cíl pro NavMeshAgent
+        agent.SetDestination(target.position);
 
-        // Pohyb
-        transform.position = Vector2.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
+        // Aktualizace animací
+        Vector2 direction = agent.velocity.normalized;
+        float currentSpeed = agent.velocity.magnitude;
 
-        // Aktualizace animace
         animator.SetFloat("Horizontal", direction.x);
         animator.SetFloat("Vertical", direction.y);
-        animator.SetFloat("Speed", distance > 0.1f ? speed : 0f);
+        animator.SetFloat("Speed", currentSpeed);
     }
 
     // Najde hráèe podle tagu "Player"
@@ -43,9 +58,12 @@ public class EnemyController : MonoBehaviour
         {
             target = player.transform;
         }
-        else
-        {
-            Debug.LogWarning("Hráè nebyl nalezen ve scénì!");
-        }
+    }
+
+    // Metoda pro zmìnu rychlosti bìhem hry
+    public void SetSpeed(float newSpeed)
+    {
+        moveSpeed = newSpeed;
+        agent.speed = newSpeed;
     }
 }
