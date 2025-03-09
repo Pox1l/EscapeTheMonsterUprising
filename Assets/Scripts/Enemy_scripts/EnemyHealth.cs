@@ -24,6 +24,10 @@ public class Enemy : MonoBehaviour
     [Header("XP Settings")]
     public GameObject xpPrefab; // Prefab XP, který se spawnuje pøi smrti
 
+    [Header("Particle")]
+    [SerializeField] private ParticleSystem damageParticle;
+
+    private ParticleSystem damageParticleInstance;
 
     void Start()
     {
@@ -52,7 +56,6 @@ public class Enemy : MonoBehaviour
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(damageToPlayer); // Zpùsob poškození hráèi
-                   // Debug.Log("Enemy damaged player over time!");
                     lastDamageTime = Time.time;
                 }
             }
@@ -62,7 +65,7 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        //Debug.Log("Enemy took damage: " + damage);
+        SpawnDamageParticle();
 
         if (currentHealth <= 0)
         {
@@ -72,8 +75,6 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-       // Debug.Log("Enemy has died!");
-
         if (xpPrefab != null)
         {
             Instantiate(xpPrefab, transform.position, Quaternion.identity);
@@ -84,6 +85,24 @@ public class Enemy : MonoBehaviour
         }
 
         Destroy(gameObject); // Odstraní nepøítele ze scény
+    }
+
+    private void SpawnDamageParticle()
+    {
+        if (damageParticle != null && player != null)
+        {
+            // Vektor smìrem od hráèe k nepøíteli (v 2D)
+            Vector2 direction = (Vector2)(transform.position - player.position);
+
+            // Úhel otoèení ve stupních (pro 2D)
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+            // Otoèení efektu tak, aby smìøoval od hráèe
+            Quaternion particleRotation = Quaternion.Euler(0, 0, angle);
+
+            // Spawn èástic s otoèením
+            damageParticleInstance = Instantiate(damageParticle, transform.position, particleRotation);
+        }
     }
 
 }

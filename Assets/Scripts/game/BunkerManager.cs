@@ -61,6 +61,7 @@ public class BunkerManager : MonoBehaviour
     {
         if (resultsTableUI != null)
         {
+            Time.timeScale = 1;
             resultsTableUI.SetActive(false); // Skryje tabulku
         }
     }

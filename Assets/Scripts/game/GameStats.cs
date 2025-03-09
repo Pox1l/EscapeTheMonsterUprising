@@ -20,6 +20,7 @@ public class GameStats : MonoBehaviour
         {
             isPanelActive = !isPanelActive;
             uiPanel.SetActive(isPanelActive);
+            Time.timeScale = isPanelActive ? 0f : 1f; // Pozastavení nebo obnovení èasu
         }
     }
 }

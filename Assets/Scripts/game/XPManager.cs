@@ -62,7 +62,7 @@ public class XPManager : MonoBehaviour
 
         if (levelText != null)
         {
-            levelText.text = "Level: " + level;
+            //levelText.text = "Level: " + level;
         }
         else
         {
@@ -83,7 +83,7 @@ public class XPManager : MonoBehaviour
         {
             //Debug.Log("XP systém aktivní! (Venku)");
             xpSlider = GameObject.Find("XP_Slider")?.GetComponent<Slider>();
-            levelText = GameObject.Find("Level_Text")?.GetComponent<Text>();
+            //levelText = GameObject.Find("Level_Text")?.GetComponent<Text>();
             UpdateUI();
         }
         else
