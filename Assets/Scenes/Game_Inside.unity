@@ -7562,6 +7562,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiPanel: {fileID: 1058747620}
+  rescuedNPCText: {fileID: 215108484}
 --- !u!1 &742425988
 GameObject:
   m_ObjectHideFlags: 0

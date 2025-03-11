@@ -7,7 +7,7 @@ public class XPManager : MonoBehaviour
     public static XPManager instance; // Singleton instance
 
     private Slider xpSlider;
-    private Text levelText;
+    //private Text levelText;
     private int currentXP = 0;
     private int level = 1;
     private int xpToLevelUp = 100;
@@ -60,14 +60,7 @@ public class XPManager : MonoBehaviour
             Debug.LogWarning("XP Slider není nalezen!");
         }
 
-        if (levelText != null)
-        {
-            //levelText.text = "Level: " + level;
-        }
-        else
-        {
-            Debug.LogWarning("Level Text není nalezen!");
-        }
+        
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

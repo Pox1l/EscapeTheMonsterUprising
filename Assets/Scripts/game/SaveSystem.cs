@@ -1,31 +1,32 @@
-using UnityEngine;
 using System.IO;
+using UnityEngine;
 
 public static class SaveSystem
 {
-    private static string savePath = Application.persistentDataPath + "/save.json";
+    private static string path = Application.persistentDataPath + "/saveData.json";
 
-    [System.Serializable]
-    private class SaveData
+    public static void SaveNPCCount(int count)
     {
-        public int rescuedNPCCount;
+        SaveData data = new SaveData { totalNPCs = count };
+        string json = JsonUtility.ToJson(data, true);
+        File.WriteAllText(path, json);
+        Debug.Log("Data uložena: " + json);
     }
 
-    public static void SaveGame(int rescuedNPCCount)
+    public static int LoadNPCCount()
     {
-        SaveData data = new SaveData { rescuedNPCCount = rescuedNPCCount };
-        string json = JsonUtility.ToJson(data);
-        File.WriteAllText(savePath, json);
-    }
-
-    public static int LoadGame()
-    {
-        if (File.Exists(savePath))
+        if (File.Exists(path))
         {
-            string json = File.ReadAllText(savePath);
+            string json = File.ReadAllText(path);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
-            return data.rescuedNPCCount;
+            return data.totalNPCs;
         }
-        return 0;
+        return 0; // Pokud soubor neexistuje, vrátí 0
     }
+}
+
+[System.Serializable]
+public class SaveData
+{
+    public int totalNPCs;
 }

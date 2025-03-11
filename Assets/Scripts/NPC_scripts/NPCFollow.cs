@@ -3,6 +3,12 @@ using TMPro;
 
 public class NPCFollow : MonoBehaviour
 {
+
+    [Header("Particle")]
+    [SerializeField] private ParticleSystem exportParticle;
+
+    private ParticleSystem exportParticleInstance;
+
     public Transform player; // Hráèùv Transform
     public float followSpeed = 3f; // Rychlost sledování
     public Vector2 rightTopOffset = new Vector2(1f, 1f);
@@ -140,6 +146,7 @@ public class NPCFollow : MonoBehaviour
 
     private void RescueNPC()
     {
+        SpawnDamageParticle();
         Debug.Log($"NPC {gameObject.name} zachránìno!");
         isFollowing = false; // Pøestane sledovat hráèe
         followingNPCCount--; // Snížení poètu sledujících NPC
@@ -149,12 +156,12 @@ public class NPCFollow : MonoBehaviour
         if (hatchManager != null)
         {
             hatchManager.AddRescuedNPC();
+            Destroy(gameObject); // NPC zmizí
         }
 
         // Pøidání penìz hráèi po zachránìní NPC
         PlayerMoney.Instance.AddMoney(50); // Pøedpokládané množství penìz, které se pøidá za zachránìné NPC
 
-        Destroy(gameObject); // NPC zmizí
     }
 
 
@@ -181,4 +188,14 @@ public class NPCFollow : MonoBehaviour
             Debug.Log("NPC destroyed. Total following NPCs: " + followingNPCCount);
         }
     }
+
+    private void SpawnDamageParticle()
+    {
+        
+            exportParticleInstance = Instantiate(exportParticle, transform.position, Quaternion.identity);
+        
+    }
+
+
+
 }
