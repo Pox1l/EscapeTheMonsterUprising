@@ -7,23 +7,23 @@ public class XPManager : MonoBehaviour
     public static XPManager instance; // Singleton instance
 
     private Slider xpSlider;
-    //private Text levelText;
     private int currentXP = 0;
     private int level = 1;
     private int xpToLevelUp = 100;
-
     private bool isOutdoorScene; // Funguje jen ve venkovní scénì
+
+    public GameObject upgradeUIPanel; // UI panel pro upgrady
 
     void Awake()
     {
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // Zachová objekt mezi scénami
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject); // Zabrání duplikaci
+            Destroy(gameObject);
             return;
         }
 
@@ -33,7 +33,7 @@ public class XPManager : MonoBehaviour
 
     public void AddXP(int amount)
     {
-        if (!isOutdoorScene) return; // XP funguje jen venku
+        if (!isOutdoorScene) return;
 
         currentXP += amount;
         Debug.Log($"Hráè sebral XP: {amount}, Aktuální XP: {currentXP}/{xpToLevelUp}, Level: {level}");
@@ -43,9 +43,32 @@ public class XPManager : MonoBehaviour
             currentXP = 0;
             level++;
             Debug.Log($"LEVEL UP! Nový level: {level}");
+            ShowUpgradeUI(); // Zobrazí UI upgradu
         }
 
         UpdateUI();
+    }
+
+    private void ShowUpgradeUI()
+    {
+        if (upgradeUIPanel != null)
+        {
+            upgradeUIPanel.SetActive(true); // Aktivuje UI s upgrady
+            Time.timeScale = 0f; // Pauzne hru, aby hráè vybral upgrade
+        }
+        else
+        {
+            Debug.LogWarning("Upgrade UI Panel není nastaven!");
+        }
+    }
+
+    public void CloseUpgradeUI()
+    {
+        if (upgradeUIPanel != null)
+        {
+            upgradeUIPanel.SetActive(false);
+            Time.timeScale = 1f; // Obnoví èas ve høe
+        }
     }
 
     private void UpdateUI()
@@ -53,14 +76,11 @@ public class XPManager : MonoBehaviour
         if (xpSlider != null)
         {
             xpSlider.value = (float)currentXP / xpToLevelUp;
-            Debug.Log($"Aktualizace slideru: {xpSlider.value * 100}% XP");
         }
         else
         {
             Debug.LogWarning("XP Slider není nalezen!");
         }
-
-        
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -74,14 +94,13 @@ public class XPManager : MonoBehaviour
 
         if (isOutdoorScene)
         {
-            //Debug.Log("XP systém aktivní! (Venku)");
             xpSlider = GameObject.Find("XP_Slider")?.GetComponent<Slider>();
-            //levelText = GameObject.Find("Level_Text")?.GetComponent<Text>();
+
+            GameObject upgradeUIObj = GameObject.Find("UpgradeUIPanel"); // Najde UI upgrade panel ve scénì
+            if (upgradeUIObj != null)
+                upgradeUIPanel = upgradeUIObj;
+
             UpdateUI();
-        }
-        else
-        {
-            //Debug.Log("XP systém vypnutý! (Bunkr)");
         }
     }
 

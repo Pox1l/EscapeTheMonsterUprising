@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a9460e72bfc48c4ab42f1677332c5b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xpAmount: 10
+  xpAmount: 50
   moveSpeed: 5
   pickupRange: 0.11
   rangeToActivate: 5
