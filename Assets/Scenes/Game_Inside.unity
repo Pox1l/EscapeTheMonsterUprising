@@ -8898,9 +8898,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742425989}
-        m_TargetAssemblyTypeName: BunkerManager, Assembly-CSharp
-        m_MethodName: CloseResultsTable
+      - m_Target: {fileID: 1945899776}
+        m_TargetAssemblyTypeName: ShopSystem, Assembly-CSharp
+        m_MethodName: CloseShopUI
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
