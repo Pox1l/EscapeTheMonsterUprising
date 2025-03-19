@@ -51,6 +51,20 @@ public class ShopSystem : MonoBehaviour
         }
     }
 
+    public void CloseShopUI()
+    {
+        if (shopUI != null)
+        {
+            isShopOpen = false;
+            shopUI.SetActive(false); // Skrýt UI
+        }
+        else
+        {
+            Debug.LogError("Shop UI is not assigned.");
+        }
+    }
+
+
     public void BuyWeapon(int weaponIndex)
     {
         if (weaponIndex < 0 || weaponIndex >= weaponPrefabs.Length)

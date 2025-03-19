@@ -11,6 +11,7 @@ public class PlayerMoney : MonoBehaviour
     private string savePath;
 
     private TextMeshProUGUI moneyText; // UI prvek pro zobrazení penìz
+    private TextMeshProUGUI moneyChangeText; // Text pro zobrazení zmìny penìz (+ nebo -)
 
     private void Awake()
     {
@@ -54,19 +55,24 @@ public class PlayerMoney : MonoBehaviour
         {
             currentMoney -= amount;
             Debug.Log("Money spent: " + amount + ". Remaining: " + currentMoney);
-            UpdateMoneyUI();
-            SaveMoney();
         }
         else
         {
-            Debug.LogError("Not enough money!");
+            // Pokud hráè nemá dostatek penìz, nastaví je na 0
+            Debug.LogError("Not enough money! Setting money to zero.");
+            currentMoney = 0;
         }
+        ShowMoneyChangeEffect(-amount); // Zobrazit zmìnu penìz s negativním efektem
+        UpdateMoneyUI();
+        SaveMoney();
     }
+
 
     public void AddMoney(int amount)
     {
         currentMoney += amount;
         Debug.Log("Money added: " + amount + ". Total: " + currentMoney);
+        ShowMoneyChangeEffect(amount); // Zobrazit zmìnu penìz s pozitivním efektem
         UpdateMoneyUI();
         SaveMoney();
     }
@@ -109,6 +115,39 @@ public class PlayerMoney : MonoBehaviour
         if (moneyTextObject != null)
         {
             moneyText = moneyTextObject.GetComponent<TextMeshProUGUI>();
+        }
+
+        // Najdi objekt pro zmìnu penìz
+        GameObject moneyChangeTextObject = GameObject.Find("MoneyChangeText");
+        if (moneyChangeTextObject != null)
+        {
+            moneyChangeText = moneyChangeTextObject.GetComponent<TextMeshProUGUI>();
+        }
+    }
+
+    private void ShowMoneyChangeEffect(int amount)
+    {
+        if (moneyChangeText != null)
+        {
+            // Nastav text na zmìnu penìz
+            moneyChangeText.text = (amount > 0 ? "+" : "") + amount.ToString() + "$";
+
+            // Nastav barvu textu
+            moneyChangeText.color = (amount > 0) ? Color.green : Color.red;
+
+            // Ukaž efekt
+            moneyChangeText.gameObject.SetActive(true);
+
+            // Skryj efekt po 1 sekundì
+            Invoke("HideMoneyChangeEffect", 1f);
+        }
+    }
+
+    private void HideMoneyChangeEffect()
+    {
+        if (moneyChangeText != null)
+        {
+            moneyChangeText.gameObject.SetActive(false);
         }
     }
 

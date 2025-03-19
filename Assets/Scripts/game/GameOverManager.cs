@@ -5,6 +5,7 @@ public class GameOverManager : MonoBehaviour
 {
     private static GameOverManager instance;
     public GameObject gameOverPanel; // Pøipoj UI panel
+    public int moneyLossOnDeath = 50; // Poèet penìz, které hráè ztratí pøi smrti
 
     void Awake()
     {
@@ -35,10 +36,21 @@ public class GameOverManager : MonoBehaviour
         {
             gameOverPanel.SetActive(true);
         }
+
+        Time.timeScale = 0f; // Zastaví èas ve høe
+    }
+
+    private void LoseMoneyOnDeath()
+    {
+        if (PlayerMoney.Instance != null)
+        {
+            PlayerMoney.Instance.SpendMoney(moneyLossOnDeath);
+        }
     }
 
     public void RestartGame()
     {
+        Time.timeScale = 1f; // Obnoví èas
         PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Reset HP
 
         if (gameOverPanel != null)
@@ -48,11 +60,11 @@ public class GameOverManager : MonoBehaviour
 
         SceneManager.LoadScene(1); // Naète první scénu
         SceneManager.sceneLoaded += OnSceneLoaded; // Po naètení nastaví hráèe
+        LoseMoneyOnDeath(); // Odebere peníze po smrti
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Najdi EntryPoint ve scénì a pøesuò hráèe
         GameObject entryPoint = GameObject.Find("EntryPoint");
         if (entryPoint != null && PlayerHealth.Instance != null)
         {
@@ -63,11 +75,12 @@ public class GameOverManager : MonoBehaviour
             Debug.LogWarning("EntryPoint nebyl nalezen ve scénì!");
         }
 
-        SceneManager.sceneLoaded -= OnSceneLoaded; // Odpojíme event, aby se nespouštìl znovu
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     public void QuitGame()
     {
+        PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Nastaví HP na max
         Application.Quit(); // Ukonèí hru
     }
 }
