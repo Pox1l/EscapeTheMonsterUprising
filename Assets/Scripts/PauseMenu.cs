@@ -1,68 +1,80 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-//using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
-    public static bool GameIsPaused = false;
-
     public GameObject pauseMenuUI;
-    public string tagToDestroyInMenu = "Player";
+    public GameObject settingsPanel;
+    public string menuSceneName = "Menu";
+    public string playerTag = "Player"; // Tag hr·Ëe
+
+    private bool isPaused = false;
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (GameIsPaused)
+            if (settingsPanel.activeSelf)
             {
-                Resume();
+                CloseSettings();
             }
             else
             {
-                Pause();
+                TogglePauseMenu();
             }
         }
     }
+
+    public void TogglePauseMenu()
+    {
+        isPaused = !isPaused;
+        pauseMenuUI.SetActive(isPaused);
+        Time.timeScale = isPaused ? 0f : 1f;
+    }
+
     public void Resume()
     {
-        
+        isPaused = false;
         pauseMenuUI.SetActive(false);
         Time.timeScale = 1f;
-        GameIsPaused = false;
-    }
-    void Pause()
-    {
-        pauseMenuUI.SetActive(true);
-        Time.timeScale = 0f;
-        GameIsPaused = true;
     }
 
     public void LoadMenu()
     {
         Time.timeScale = 1f;
-        DestroyObjectByTag(tagToDestroyInMenu);
-        SceneManager.LoadScene("Menu");
+        DestroyPlayer();
+        SceneManager.LoadScene(menuSceneName);
     }
-    public void Quit() 
+
+    public void QuitGame()
     {
-        Debug.Log("Quiting...");
+        Debug.Log("Quitting game...");
         Application.Quit();
     }
 
-
-    private void DestroyObjectByTag(string tag)
+    public void OpenSettings()
     {
-        GameObject objectToDestroy = GameObject.FindGameObjectWithTag(tag);
-        if (objectToDestroy != null)
+        pauseMenuUI.SetActive(false);
+        settingsPanel.SetActive(true);
+    }
+
+    public void CloseSettings()
+    {
+        settingsPanel.SetActive(false);
+        pauseMenuUI.SetActive(true);
+    }
+
+    private void DestroyPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player != null)
         {
-            Destroy(objectToDestroy);
-            Debug.Log($"Destroyed object with tag {tag}");
+            Destroy(player);
+            Debug.Log("Player destroyed before loading menu.");
         }
         else
         {
-            Debug.Log($"No object found with tag {tag}.");
+            Debug.Log("No player found with tag " + playerTag);
         }
     }
 }

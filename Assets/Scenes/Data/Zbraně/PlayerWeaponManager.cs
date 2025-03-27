@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("GunHoldPoint: " + gunHoldPoint);
         saveFilePath = Application.persistentDataPath + "/purchasedWeapons.json";
         LoadPurchasedWeapons();
 
@@ -34,6 +36,38 @@ public class PlayerWeaponManager : MonoBehaviour
         {
             LoadWeapon(currentWeaponName); // Naète uloženou zbraò
         }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Zkontrolujeme, zda je gunHoldPoint stále pøiøazený
+        if (gunHoldPoint == null)
+        {
+            gunHoldPoint = GameObject.Find("GunHolder")?.transform;
+
+            if (gunHoldPoint == null)
+            {
+                Debug.LogError("GunHoldPoint nebyl nalezen! Ujistìte se, že je v hierarchii scény.");
+            }
+        }
+
+        // Naèteme zbraò, pokud je nìjaká pøiøazena
+        if (!string.IsNullOrEmpty(currentWeaponName) && gunHoldPoint != null)
+        {
+            LoadWeapon(currentWeaponName);
+        }
+    }
+
+    private void OnEnable()
+    {
+        // Zaregistrujeme metodu pro naètení scény
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        // Odregistrování metody pro naètení scény
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void LoadPurchasedWeapons()

@@ -1,113 +1,116 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class SettingsMenuController : MonoBehaviour
 {
-    public GameObject mainMenuPanel; // Panel hlavního menu
-    public GameObject settingsPanel; // Panel nastavení
+    [Header("Panels")]
+    public GameObject mainMenuPanel;
+    public GameObject settingsPanel;
     public GameObject titlePanel;
-    public GameObject infoPanel;     // Podpanel Info
-    public GameObject audioPanel;    // Podpanel Audio
-    public GameObject graphicsPanel; // Podpanel Graphics
 
-    public Button infoButton;        // Tlaèítko Info
-    public Button audioButton;       // Tlaèítko Audio
-    public Button graphicsButton;    // Tlaèítko Graphics
+    [Header("Sub Panels")]
+    public GameObject infoPanel;
+    public GameObject audioPanel;
+    public GameObject graphicsPanel;
 
-    public Color normalColor = Color.white; // Normální barva tlaèítek
-    public Color highlightedColor = Color.green; // Zvýraznìná barva tlaèítka
+    [Header("Buttons")]
+    public Button infoButton;
+    public Button audioButton;
+    public Button graphicsButton;
 
-    private Button currentHighlightedButton; // Aktuálnì zvýraznìné tlaèítko
+    [Header("Colors")]
+    public Color normalColor = Color.white;
+    public Color highlightedColor = Color.green;
 
-    // Otevøení nastavení a skrytí hlavního menu
+    private Button currentHighlightedButton;
+    private Dictionary<string, GameObject> panels;
+    private List<Button> buttons;
+
+    void Start()
+    {
+        // Vytvoøíme slovník panelù
+        panels = new Dictionary<string, GameObject>
+        {
+            { "Info", infoPanel },
+            { "Audio", audioPanel },
+            { "Graphics", graphicsPanel }
+        };
+
+        // Seznam tlaèítek pro resetování barev
+        buttons = new List<Button> { infoButton, audioButton, graphicsButton };
+
+        // Nastavíme výchozí panel
+        ShowPanel("Info");
+    }
+
     public void OpenSettings()
     {
-        if (settingsPanel != null && mainMenuPanel != null && titlePanel != null)
-        {
-            settingsPanel.SetActive(true);
-            mainMenuPanel.SetActive(false);
-            titlePanel.SetActive(false);
-            ShowPanel("Info"); // Výchozí panel
-        }
+        settingsPanel.SetActive(true);
+        mainMenuPanel.SetActive(false);
+        titlePanel.SetActive(false);
     }
 
-    // Zavøení nastavení a návrat na hlavní menu
     public void CloseSettings()
     {
-        if (settingsPanel != null && mainMenuPanel != null && titlePanel != null)
-        {
-            settingsPanel.SetActive(false);
-            mainMenuPanel.SetActive(true);
-            titlePanel.SetActive(true);
-        }
+        settingsPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
+        titlePanel.SetActive(true);
     }
 
-    // Pøepnutí mezi jednotlivými panely nastavení
     public void ShowPanel(string panelName)
     {
         // Skryje všechny panely
-        infoPanel.SetActive(false);
-        audioPanel.SetActive(false);
-        graphicsPanel.SetActive(false);
-
-        // Resetuje barvy tlaèítek
-        ResetButtonColors();
-
-        // Zobrazí odpovídající panel a zvýrazní odpovídající tlaèítko
-        switch (panelName)
+        foreach (var panel in panels.Values)
         {
-            case "Info":
-                infoPanel.SetActive(true);
-                HighlightButton(infoButton);
-                break;
-            case "Audio":
-                audioPanel.SetActive(true);
-                HighlightButton(audioButton);
-                break;
-            case "Graphics":
-                graphicsPanel.SetActive(true);
-                HighlightButton(graphicsButton);
-                break;
-            default:
-                Debug.LogWarning("Unknown panel: " + panelName);
-                break;
+            panel.SetActive(false);
         }
+
+        // Aktivuje požadovaný panel
+        if (panels.ContainsKey(panelName))
+        {
+            panels[panelName].SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("Unknown panel: " + panelName);
+            return;
+        }
+
+        // Zvýrazní odpovídající tlaèítko
+        HighlightButton(GetButtonByName(panelName));
     }
 
-    // Zvýrazní tlaèítko zmìnou barvy jeho obrázku
     private void HighlightButton(Button button)
     {
         if (currentHighlightedButton != null)
         {
-            // Resetuje barvu pøedchozího tlaèítka
             ResetButtonColor(currentHighlightedButton);
         }
 
-        // Nastaví nové tlaèítko jako zvýraznìné
         currentHighlightedButton = button;
-
-        // Zmìní barvu obrázku tlaèítka na zvýraznìnou
-        Image buttonImage = button.GetComponent<Image>();
-        if (buttonImage != null)
+        if (button != null)
         {
-            buttonImage.color = highlightedColor;
+            button.GetComponent<Image>().color = highlightedColor;
         }
-    }
-
-    // Resetuje barvy všech tlaèítek na normální
-    private void ResetButtonColors()
-    {
-        ResetButtonColor(infoButton);
-        ResetButtonColor(audioButton);
-        ResetButtonColor(graphicsButton);
     }
 
     private void ResetButtonColor(Button button)
     {
-        Image buttonImage = button.GetComponent<Image>();
-        if (buttonImage != null)
+        if (button != null)
         {
-            buttonImage.color = normalColor;
+            button.GetComponent<Image>().color = normalColor;
         }
+    }
+
+    private Button GetButtonByName(string panelName)
+    {
+        return panelName switch
+        {
+            "Info" => infoButton,
+            "Audio" => audioButton,
+            "Graphics" => graphicsButton,
+            _ => null
+        };
     }
 }
