@@ -52,7 +52,11 @@ public class HierarchyObjectColor
                 backgroundColor = new Color(1f, 0.3f, 0.3f);
                 textColor = new Color(0.9f, 0.9f, 0.9f);
             break;
-        }
+            case "GameOver":
+                backgroundColor = new Color(0.2f, 0.1f, 0.7f);
+                textColor = new Color(0.9f, 0.9f, 0.9f);
+            break;
+            }
 
 
                 if (backgroundColor != Color.white)
