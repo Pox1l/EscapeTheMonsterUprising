@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class XPManager : MonoBehaviour
@@ -10,7 +9,6 @@ public class XPManager : MonoBehaviour
     private int currentXP = 0;
     private int level = 1;
     private int xpToLevelUp = 100;
-    private bool isOutdoorScene; // Funguje jen ve venkovní scénì
 
     public GameObject upgradeUIPanel; // UI panel pro upgrady
 
@@ -19,22 +17,24 @@ public class XPManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
             return;
         }
+    }
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        CheckScene();
+    void Start()
+    {
+        xpSlider = GameObject.Find("XP_Slider")?.GetComponent<Slider>();
+        GameObject upgradeUIObj = GameObject.Find("UpgradeUIPanel");
+        if (upgradeUIObj != null)
+            upgradeUIPanel = upgradeUIObj;
     }
 
     public void AddXP(int amount)
     {
-        if (!isOutdoorScene) return;
-
         currentXP += amount;
         Debug.Log($"Hráè sebral XP: {amount}, Aktuální XP: {currentXP}/{xpToLevelUp}, Level: {level}");
 
@@ -81,31 +81,5 @@ public class XPManager : MonoBehaviour
         {
             Debug.LogWarning("XP Slider není nalezen!");
         }
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        CheckScene();
-    }
-
-    private void CheckScene()
-    {
-        isOutdoorScene = SceneManager.GetActiveScene().buildIndex == 2; // ID venkovní scény
-
-        if (isOutdoorScene)
-        {
-            xpSlider = GameObject.Find("XP_Slider")?.GetComponent<Slider>();
-
-            GameObject upgradeUIObj = GameObject.Find("UpgradeUIPanel"); // Najde UI upgrade panel ve scénì
-            if (upgradeUIObj != null)
-                upgradeUIPanel = upgradeUIObj;
-
-            UpdateUI();
-        }
-    }
-
-    void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

@@ -3,17 +3,19 @@ using UnityEngine.Tilemaps;
 
 public class NPCSpawner : MonoBehaviour
 {
-    public GameObject npcPrefab;  // Prefab NPC
-    public Transform player;      // Reference na hráèe
-    public Tilemap grassTilemap;  // Tilemap, kde se spawnují NPC
-    public int npcCount = 5;      // Poèet NPC k vytvoøení
+    public GameObject[] npcPrefabs;  // Pole rùzných NPC prefabù
+    public Transform player;         // Reference na hráèe
+    public Tilemap grassTilemap;     // Tilemap, kde se spawnují NPC
+    public int minNPCCount = 3;      // Minimální poèet NPC
+    public int maxNPCCount = 8;      // Maximální poèet NPC
 
     private void Start()
     {
-        SpawnNPCs();
+        int npcCount = Random.Range(minNPCCount, maxNPCCount + 1); // Náhodný poèet NPC
+        SpawnNPCs(npcCount);
     }
 
-    private void SpawnNPCs()
+    private void SpawnNPCs(int npcCount)
     {
         BoundsInt bounds = grassTilemap.cellBounds;
         int spawnedCount = 0;
@@ -28,17 +30,19 @@ public class NPCSpawner : MonoBehaviour
 
             if (grassTilemap.HasTile(randomCell))
             {
-                // Pøevod buòky na svìtové souøadnice
                 Vector3 spawnPosition = grassTilemap.CellToWorld(randomCell) + new Vector3(0.5f, 0.5f, 0);
 
+                // Náhodný výbìr NPC prefab
+                GameObject randomNPCPrefab = npcPrefabs[Random.Range(0, npcPrefabs.Length)];
+
                 // Vytvoøení NPC
-                GameObject npc = Instantiate(npcPrefab, spawnPosition, Quaternion.identity);
+                GameObject npc = Instantiate(randomNPCPrefab, spawnPosition, Quaternion.identity);
 
                 // Pøiøazení reference na hráèe
                 NPCFollow followerScript = npc.GetComponent<NPCFollow>();
                 if (followerScript != null)
                 {
-                    followerScript.player = player; // Pøiøazení hráèe
+                    followerScript.player = player;
                 }
 
                 spawnedCount++;
