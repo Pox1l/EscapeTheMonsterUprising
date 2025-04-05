@@ -161,6 +161,8 @@ public class NPCFollow : MonoBehaviour
 
         // Pøidání penìz hráèi po zachránìní NPC
         PlayerMoney.Instance.AddMoney(50); // Pøedpokládané množství penìz, které se pøidá za zachránìné NPC
+        Player_XP.Instance.AddXP(10);
+
 
     }
 

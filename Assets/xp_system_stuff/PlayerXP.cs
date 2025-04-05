@@ -6,7 +6,7 @@ public class PlayerXP : MonoBehaviour
 {
     private Slider xpSlider;
     private Text levelText;
-    private int currentXP = 0;
+    private int currentXP;
     private int level = 1;
     private int xpToLevelUp = 100;
 
