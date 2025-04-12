@@ -56,6 +56,11 @@ public class HierarchyObjectColor
                 backgroundColor = new Color(0.2f, 0.1f, 0.7f);
                 textColor = new Color(0.9f, 0.9f, 0.9f);
             break;
+
+            case "Shop":
+                backgroundColor = new Color(0.4f, 0.2f, 0.1f);
+                textColor = new Color(0.9f, 0.9f, 0.9f);
+            break;
             }
 
 

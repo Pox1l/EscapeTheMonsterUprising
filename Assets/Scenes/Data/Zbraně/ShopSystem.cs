@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI; // Potøebné pro práci s UI Button
 
 public class ShopSystem : MonoBehaviour
 {
@@ -9,7 +10,9 @@ public class ShopSystem : MonoBehaviour
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private GameObject shopUI;
     [SerializeField] private TMP_Text[] weaponButtons;
+    [SerializeField] private Button[] weaponButtonObjects; // Reference na Buttony
     [SerializeField] private int healCost = 25; // Cena za heal
+    [SerializeField] private int[] npcRequirements; // Poèet NPC potøebný pro odemèení zbraní
 
     private bool isShopOpen = false;
     private bool playerInShopZone = false;
@@ -18,6 +21,7 @@ public class ShopSystem : MonoBehaviour
     {
         UpdateMoneyUI();
         UpdateShopUI();
+        ApplyNPCUnlocks();
 
         if (shopUI != null)
         {
@@ -64,12 +68,19 @@ public class ShopSystem : MonoBehaviour
         }
     }
 
-
     public void BuyWeapon(int weaponIndex)
     {
         if (weaponIndex < 0 || weaponIndex >= weaponPrefabs.Length)
         {
             Debug.LogError("Invalid weapon index.");
+            return;
+        }
+
+        // Kontrola, jestli je zbraò odemèena podle poètu zachránìných NPC
+        int totalNPCs = SaveSystem.LoadNPCCount();
+        if (totalNPCs < npcRequirements[weaponIndex])
+        {
+            ShowFeedback("Weapon locked! Save more NPCs to unlock.", Color.red);
             return;
         }
 
@@ -123,8 +134,6 @@ public class ShopSystem : MonoBehaviour
         }
     }
 
-
-
     private void UpdateShopUI()
     {
         for (int i = 0; i < weaponPrefabs.Length; i++)
@@ -133,20 +142,36 @@ public class ShopSystem : MonoBehaviour
             {
                 string weaponName = weaponPrefabs[i].name;
 
-                if (PlayerWeaponManager.Instance.IsWeaponPurchased(weaponName))
+                // Kontrola odemèení zbranì podle poètu NPC
+                int totalNPCs = SaveSystem.LoadNPCCount();
+                if (totalNPCs >= npcRequirements[i])
                 {
-                    if (PlayerWeaponManager.Instance.IsWeaponEquipped(weaponName))
+                    if (PlayerWeaponManager.Instance.IsWeaponPurchased(weaponName))
                     {
-                        weaponButtons[i].text = "Equipped";
+                        if (PlayerWeaponManager.Instance.IsWeaponEquipped(weaponName))
+                        {
+                            weaponButtons[i].text = "Equipped";
+                        }
+                        else
+                        {
+                            weaponButtons[i].text = "Owned";
+                        }
                     }
                     else
                     {
-                        weaponButtons[i].text = "Owned";
+                        weaponButtons[i].text = "Buy " + weaponCosts[i];
                     }
                 }
                 else
                 {
-                    weaponButtons[i].text = "Buy " + weaponCosts[i];
+                    // Zbraò je zamèená
+                    weaponButtons[i].text = "Locked (Save " + npcRequirements[i] + " NPCs)";
+                }
+
+                // Deaktivování tlaèítka, pokud zbraò není odemèena
+                if (weaponButtonObjects[i] != null)
+                {
+                    weaponButtonObjects[i].interactable = totalNPCs >= npcRequirements[i];
                 }
             }
         }
@@ -205,5 +230,11 @@ public class ShopSystem : MonoBehaviour
                 ToggleShopUI();
             }
         }
+    }
+
+    //Nastavení NPC Requirements(mùžeš to pøidat pøímo do inspektoru)
+    public void ApplyNPCUnlocks()
+    {
+        npcRequirements = new int[] { 0, 5, 10, 20, 30 }; // Nastavení poètu NPC pro odemèení zbraní
     }
 }
