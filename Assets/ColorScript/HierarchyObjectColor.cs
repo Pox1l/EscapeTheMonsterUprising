@@ -35,36 +35,36 @@ public class HierarchyObjectColor
             }
 
 
-           
-        switch (obj.name)
-        {
-            case "GameStats":
-                backgroundColor = new Color(0.2f, 0.6f, 0.1f);
-                textColor = new Color(0.9f, 0.9f, 0.9f);
-            break;
 
-            case "Virtual Camera":
-                backgroundColor = new Color(0.2f, 0.6f, 0.1f);
-                textColor = new Color(0.9f, 0.9f, 0.9f);
-            break;
+            switch (obj.name)
+            {
+                case "GameStats":
+                    backgroundColor = new Color(0.2f, 0.6f, 0.1f);
+                    textColor = new Color(0.9f, 0.9f, 0.9f);
+                    break;
 
-            case "XPManager":
-                backgroundColor = new Color(1f, 0.3f, 0.3f);
-                textColor = new Color(0.9f, 0.9f, 0.9f);
-            break;
-            case "GameOver":
-                backgroundColor = new Color(0.2f, 0.1f, 0.7f);
-                textColor = new Color(0.9f, 0.9f, 0.9f);
-            break;
+                case "Virtual Camera":
+                    backgroundColor = new Color(0.2f, 0.6f, 0.1f);
+                    textColor = new Color(0.9f, 0.9f, 0.9f);
+                    break;
 
-            case "Shop":
-                backgroundColor = new Color(0.4f, 0.2f, 0.1f);
-                textColor = new Color(0.9f, 0.9f, 0.9f);
-            break;
+                case "XPManager":
+                    backgroundColor = new Color(1f, 0.3f, 0.3f);
+                    textColor = new Color(0.9f, 0.9f, 0.9f);
+                    break;
+                case "GameOver":
+                    backgroundColor = new Color(0.2f, 0.1f, 0.7f);
+                    textColor = new Color(0.9f, 0.9f, 0.9f);
+                    break;
+
+                case "Shop":
+                    backgroundColor = new Color(0.4f, 0.2f, 0.1f);
+                    textColor = new Color(0.9f, 0.9f, 0.9f);
+                    break;
             }
 
 
-                if (backgroundColor != Color.white)
+            if (backgroundColor != Color.white)
             {
                 Rect offsetRect = new Rect(selectionRect.position + offset, selectionRect.size);
                 Rect bgRect = new Rect(selectionRect.x, selectionRect.y, selectionRect.width + 50, selectionRect.height);
