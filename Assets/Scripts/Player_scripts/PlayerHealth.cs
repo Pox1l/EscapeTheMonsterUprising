@@ -77,6 +77,8 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth += healAmount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        ScreenEffectController.Instance?.PlayHealEffect();
+
 
         if (currentHealth != lastHealth) // Ukládáme pouze pokud došlo ke zmìnì
         {
@@ -91,6 +93,8 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        ScreenEffectController.Instance?.PlayDamageEffect();
+
 
         if (currentHealth != lastHealth)
         {
