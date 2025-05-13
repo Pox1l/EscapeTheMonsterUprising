@@ -5,7 +5,7 @@ using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 
-/// <summary> Sets a background color for game objects in the Hierarchy tab</summary>
+
 [UnityEditor.InitializeOnLoad]
 #endif
 public class HierarchyObjectColor

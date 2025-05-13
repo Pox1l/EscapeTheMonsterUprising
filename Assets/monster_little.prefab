@@ -253,7 +253,7 @@ MonoBehaviour:
   isBig: 0
   isFat: 0
   isLittle: 1
-  xpPrefab: {fileID: 8087026249706395546, guid: db19be3f6b5028f4badf724a2d658a3f, type: 3}
+  xpPrefab: {fileID: 0}
   damageParticle: {fileID: 4497852029954134139, guid: 3ee1453d7262e7245b858a20df5d76da, type: 3}
 --- !u!195 &-3342283486178272394
 NavMeshAgent:
