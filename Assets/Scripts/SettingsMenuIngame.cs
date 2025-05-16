@@ -5,14 +5,15 @@ using UnityEngine.UI;
 public class SettingsMenuIngamee : MonoBehaviour
 {
     [Header("Sub Panels")]
-    public GameObject infoPanel;
+    public GameObject controlsPanel;
     public GameObject audioPanel;
-    public GameObject graphicsPanel;
+    public GameObject infoPanel;
 
     [Header("Buttons")]
-    public Button infoButton;
+    public Button controlsButton;
     public Button audioButton;
-    public Button graphicsButton;
+    public Button infoButton;
+    public Button closeButton;
 
     [Header("Colors")]
     public Color normalColor = Color.white;
@@ -26,18 +27,19 @@ public class SettingsMenuIngamee : MonoBehaviour
         // Vytvoøíme slovník panelù
         panels = new Dictionary<string, GameObject>
         {
-            { "Info", infoPanel },
+            { "Controls", controlsPanel },
             { "Audio", audioPanel },
-            { "Graphics", graphicsPanel }
+            { "Info", infoPanel }
         };
 
         // Nastavíme výchozí panel
-        ShowPanel("Info");
+        ShowPanel("Controls");
 
         // Pøipojíme tlaèítka k jejich funkcím
-        infoButton.onClick.AddListener(() => ShowPanel("Info"));
+        controlsButton.onClick.AddListener(() => ShowPanel("Controls"));
         audioButton.onClick.AddListener(() => ShowPanel("Audio"));
-        graphicsButton.onClick.AddListener(() => ShowPanel("Graphics"));
+        infoButton.onClick.AddListener(() => ShowPanel("Info"));
+        closeButton.onClick.AddListener(CloseSettings);
     }
 
     // Pøepínání mezi panely
@@ -90,10 +92,25 @@ public class SettingsMenuIngamee : MonoBehaviour
     {
         return panelName switch
         {
-            "Info" => infoButton,
+            "Controls" => controlsButton,
             "Audio" => audioButton,
-            "Graphics" => graphicsButton,
+            "Info" => infoButton,
             _ => null
         };
     }
+
+    public void CloseSettings()
+    {
+        // Najde PauseMenu skript ve scénì a zavolá jeho CloseSettings
+        PauseMenu pauseMenu = FindObjectOfType<PauseMenu>();
+        if (pauseMenu != null)
+        {
+            pauseMenu.CloseSettings();
+        }
+        else
+        {
+            Debug.LogWarning("PauseMenu not found in scene.");
+        }
+    }
+
 }

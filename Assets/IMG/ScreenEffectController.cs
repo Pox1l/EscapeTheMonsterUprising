@@ -38,14 +38,17 @@ public class ScreenEffectController : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // Zastaví všechny coroutines pøi naètení nové scény
+        StopAllCoroutines();
+
         // Najdi overlaye podle názvu objektu ve scénì
         damageOverlay = GameObject.Find("DamageOverlay")?.GetComponent<Image>();
         healOverlay = GameObject.Find("HealOverlay")?.GetComponent<Image>();
 
         if (damageOverlay == null)
-            Debug.LogWarning(" DamageOverlay nebyl nalezen ve scénì!");
+            Debug.LogWarning("DamageOverlay nebyl nalezen ve scénì!");
         if (healOverlay == null)
-            Debug.LogWarning(" HealOverlay nebyl nalezen ve scénì!");
+            Debug.LogWarning("HealOverlay nebyl nalezen ve scénì!");
     }
 
     public void PlayDamageEffect()
@@ -66,6 +69,9 @@ public class ScreenEffectController : MonoBehaviour
         float t = 0;
         while (t < fadeDuration)
         {
+            if (overlay == null)
+                yield break;
+
             t += Time.deltaTime;
             float alpha = Mathf.Lerp(0, maxAlpha, t / fadeDuration);
             SetAlpha(overlay, alpha);
@@ -76,17 +82,24 @@ public class ScreenEffectController : MonoBehaviour
         t = 0;
         while (t < fadeDuration)
         {
+            if (overlay == null)
+                yield break;
+
             t += Time.deltaTime;
             float alpha = Mathf.Lerp(maxAlpha, 0, t / fadeDuration);
             SetAlpha(overlay, alpha);
             yield return null;
         }
 
-        SetAlpha(overlay, 0);
+        if (overlay != null)
+            SetAlpha(overlay, 0);
     }
 
     private void SetAlpha(Image img, float alpha)
     {
+        if (img == null)
+            return;
+
         Color c = img.color;
         c.a = alpha;
         img.color = c;

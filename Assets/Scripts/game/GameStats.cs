@@ -37,6 +37,17 @@ public class GameStats : MonoBehaviour
         }
     }
 
+    public void CloseUIPanel()
+    {
+        if (uiPanel != null)
+        {
+            isPanelActive = false;
+            uiPanel.SetActive(false);
+            Time.timeScale = 1f; 
+        }
+    }
+
+
     private void UpdateRescuedNPCText()
     {
         if (rescuedNPCText != null)

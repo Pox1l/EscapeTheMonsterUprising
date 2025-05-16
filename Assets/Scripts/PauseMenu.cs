@@ -7,6 +7,8 @@ public class PauseMenu : MonoBehaviour
     public GameObject settingsPanel;
     public string menuSceneName = "Menu";
     public string playerTag = "Player"; // Tag hráèe
+    public GameObject minimapUI; // Pøiøaï v Inspectoru
+
 
     private bool isPaused = false;
 
@@ -56,12 +58,16 @@ public class PauseMenu : MonoBehaviour
     {
         pauseMenuUI.SetActive(false);
         settingsPanel.SetActive(true);
+        if (minimapUI != null)
+            minimapUI.SetActive(false);
     }
 
     public void CloseSettings()
     {
         settingsPanel.SetActive(false);
         pauseMenuUI.SetActive(true);
+        if (minimapUI != null)
+            minimapUI.SetActive(true);
     }
 
     private void DestroyPlayer()
@@ -77,4 +83,6 @@ public class PauseMenu : MonoBehaviour
             Debug.Log("No player found with tag " + playerTag);
         }
     }
+
+
 }

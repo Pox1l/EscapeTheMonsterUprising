@@ -11,7 +11,7 @@ public class Player_XP : MonoBehaviour
     private int currentXP;
     private string savePath;
 
-    private TextMeshProUGUI xpText;
+    public TextMeshProUGUI xpText;
     private TextMeshProUGUI xpChangeText;
 
     private void Awake()
