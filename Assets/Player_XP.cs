@@ -119,18 +119,19 @@ public class Player_XP : MonoBehaviour
 
     private void FindXPUI()
     {
-        GameObject xpTextObject = GameObject.Find("XPText");
+        GameObject xpTextObject = GameObject.FindWithTag("XPText");
         if (xpTextObject != null)
         {
             xpText = xpTextObject.GetComponent<TextMeshProUGUI>();
         }
 
-        GameObject xpChangeTextObject = GameObject.Find("XPChangeText");
-        if (xpChangeTextObject != null)
-        {
-            xpChangeText = xpChangeTextObject.GetComponent<TextMeshProUGUI>();
-        }
+        //GameObject xpChangeTextObject = GameObject.FindWithTag("XPChangeText");
+        //if (xpChangeTextObject != null)
+        //{
+        //    xpChangeText = xpChangeTextObject.GetComponent<TextMeshProUGUI>();
+        //}
     }
+
 
     private void ShowXPChange(int amount)
     {

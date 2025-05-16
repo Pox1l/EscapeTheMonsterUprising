@@ -10,7 +10,9 @@ public class PlayerMoney : MonoBehaviour
     private int currentMoney;
     private string savePath;
 
+    [SerializeField]
     private TextMeshProUGUI moneyText; // UI prvek pro zobrazení penìz
+    [SerializeField]
     private TextMeshProUGUI moneyChangeText; // Text pro zobrazení zmìny penìz (+ nebo -)
 
     private void Awake()
@@ -111,19 +113,19 @@ public class PlayerMoney : MonoBehaviour
 
     private void FindMoneyUI()
     {
-        GameObject moneyTextObject = GameObject.Find("MoneyText"); // Najde objekt podle jména
+        GameObject moneyTextObject = GameObject.FindWithTag("MoneyText");
         if (moneyTextObject != null)
         {
             moneyText = moneyTextObject.GetComponent<TextMeshProUGUI>();
         }
 
-        // Najdi objekt pro zmìnu penìz
-        GameObject moneyChangeTextObject = GameObject.Find("MoneyChangeText");
+        GameObject moneyChangeTextObject = GameObject.FindWithTag("MoneyChangeText");
         if (moneyChangeTextObject != null)
         {
             moneyChangeText = moneyChangeTextObject.GetComponent<TextMeshProUGUI>();
         }
     }
+
 
     private void ShowMoneyChangeEffect(int amount)
     {

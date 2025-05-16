@@ -11,6 +11,9 @@ TagManager:
   - NPC
   - Bullet
   - Hatch
+  - XPText
+  - MoneyText
+  - MoneyChangeText
   layers:
   - Default
   - TransparentFX
