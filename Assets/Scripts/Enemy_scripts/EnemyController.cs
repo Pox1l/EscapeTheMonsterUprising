@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.AI;
 
+[RequireComponent(typeof(NavMeshAgent))]
 public class EnemyController : MonoBehaviour
 {
-    private Transform target; // Cíl (hráè)
-    private NavMeshAgent agent; // NavMeshAgent pro pathfinding
-    private Animator animator; // Animator pro pohyb animací
+    private Transform player;         // Hráè
+    private Transform target;         // Aktuální cíl (hráè nebo NPC)
+    private NavMeshAgent agent;       // NavMeshAgent pro pohyb
+    private Animator animator;        // Animator pro pohybové animace
 
-    [SerializeField] private float moveSpeed = 2f; // Nastavitelná rychlost v Inspectoru
+    [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private float npcAggroRange = 3f; // Do jaké vzdálenosti monstrum reaguje na NPC
 
     void Start()
     {
@@ -16,15 +19,13 @@ public class EnemyController : MonoBehaviour
 
         if (agent == null)
         {
-            Debug.LogError("Chybí NavMeshAgent na " + gameObject.name);
+            Debug.LogError("Chybí NavMeshAgent na objektu " + gameObject.name);
             return;
         }
 
-        // Umožní správné fungování v 2D
+        //  DÙLEŽITÉ pro 2D NavMesh (NavMeshPlus)
         agent.updateRotation = false;
         agent.updateUpAxis = false;
-
-        // Nastavení rychlosti podle Inspectoru
         agent.speed = moveSpeed;
 
         FindPlayer();
@@ -32,38 +33,58 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
-        if (target == null)
+        FindClosestTarget();
+
+        if (target != null)
         {
-            FindPlayer();
-            return;
+            agent.SetDestination(target.position);
+
+            // Animace
+            Vector2 velocity = agent.velocity;
+            Vector2 direction = velocity.normalized;
+            float speed = velocity.magnitude;
+
+            animator.SetFloat("Horizontal", direction.x);
+            animator.SetFloat("Vertical", direction.y);
+            animator.SetFloat("Speed", speed);
         }
-
-        // Nastaví cíl pro NavMeshAgent
-        agent.SetDestination(target.position);
-
-        // Aktualizace animací
-        Vector2 direction = agent.velocity.normalized;
-        float currentSpeed = agent.velocity.magnitude;
-
-        animator.SetFloat("Horizontal", direction.x);
-        animator.SetFloat("Vertical", direction.y);
-        animator.SetFloat("Speed", currentSpeed);
-    }
-
-    // Najde hráèe podle tagu "Player"
-    private void FindPlayer()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        else
         {
-            target = player.transform;
+            animator.SetFloat("Speed", 0);
         }
     }
 
-    // Metoda pro zmìnu rychlosti bìhem hry
-    public void SetSpeed(float newSpeed)
+    void FindPlayer()
     {
-        moveSpeed = newSpeed;
-        agent.speed = newSpeed;
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
+    }
+
+    void FindClosestTarget()
+    {
+        GameObject[] npcs = GameObject.FindGameObjectsWithTag("NPC");
+        Transform closestNpc = null;
+        float closestDistance = npcAggroRange;
+
+        foreach (GameObject npc in npcs)
+        {
+            float distance = Vector2.Distance(transform.position, npc.transform.position);
+            if (distance < closestDistance)
+            {
+                closestNpc = npc.transform;
+                closestDistance = distance;
+            }
+        }
+
+        // Pokud je v dosahu NPC, sleduj ji. Jinak hráèe.
+        target = closestNpc != null ? closestNpc : player;
+    }
+
+    public Transform GetCurrentTarget()
+    {
+        return target;
     }
 }

@@ -3,59 +3,60 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [Header("Enemy Stats")]
-    public int maxHealth = 50; // Maximální zdraví nepøítele
-    private int currentHealth; // Aktuální zdraví nepøítele
+    public int maxHealth = 50;
+    private int currentHealth;
 
     [Header("Damage Settings")]
-    public int damageToPlayer = 10; // Poškození zpùsobené hráèi
-    public float damageRange = 1.5f; // Maximální vzdálenost k hráèi pro útok
-    public float damageInterval = 1.0f; // Interval mezi útoky (v sekundách)
+    public int damageToTarget = 10;
+    public float damageRange = 1.5f;
+    public float damageInterval = 1.0f;
 
-    [Header("Monster Type")]
-    public bool isSpider = false; // Jestli je monstrum pavouk
-    public bool isBig = false; // Jestli je monstrum velké
-    public bool isFat = false; // Jestli je monstrum tlusté
-    public bool isLittle = false; // Jestli je monstrum malé
-
-    private Transform player; // Odkaz na hráèe
-    private bool isPlayerInRange = false; // Kontroluje, zda je hráè v dosahu
-    private float lastDamageTime; // Èas posledního poškození
-
-    [Header("XP Settings")]
-    public GameObject xpPrefab; // Prefab XP, který se spawnuje pøi smrti
+    //[Header("XP")]
+    //public GameObject xpPrefab;
 
     [Header("Particle")]
     [SerializeField] private ParticleSystem damageParticle;
 
-    private ParticleSystem damageParticleInstance;
+    private float lastDamageTime;
+    private EnemyController controller;
 
     void Start()
     {
-        currentHealth = maxHealth; // Inicializace zdraví
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
+        currentHealth = maxHealth;
+        controller = GetComponent<EnemyController>();
+
+        if (controller == null)
         {
-            player = playerObject.transform; // Najdi hráèe podle tagu
-        }
-        else
-        {
-            Debug.LogWarning("Player not found! Make sure the player has the 'Player' tag.");
+            Debug.LogError("EnemyController nebyl nalezen!");
         }
     }
 
     void Update()
     {
-        if (player != null)
-        {
-            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-            isPlayerInRange = distanceToPlayer <= damageRange;
+        if (controller == null) return;
 
-            if (isPlayerInRange && Time.time >= lastDamageTime + damageInterval)
+        Transform target = controller.GetCurrentTarget();
+        if (target == null) return;
+
+        float distance = Vector2.Distance(transform.position, target.position);
+
+        if (distance <= damageRange && Time.time >= lastDamageTime + damageInterval)
+        {
+            if (target.CompareTag("Player"))
             {
-                PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+                PlayerHealth playerHealth = target.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
-                    playerHealth.TakeDamage(damageToPlayer); // Zpùsob poškození hráèi
+                    playerHealth.TakeDamage(damageToTarget);
+                    lastDamageTime = Time.time;
+                }
+            }
+            else if (target.CompareTag("NPC"))
+            {
+                NPCHealth npcHealth = target.GetComponent<NPCHealth>();
+                if (npcHealth != null)
+                {
+                    npcHealth.TakeDamage(damageToTarget);
                     lastDamageTime = Time.time;
                 }
             }
@@ -75,34 +76,19 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        if (xpPrefab != null)
-        {
-            Instantiate(xpPrefab, transform.position, Quaternion.identity);
-        }
-        else
-        {
-            Debug.LogWarning("XP prefab is not assigned to enemy!");
-        }
+        //if (xpPrefab != null)
+        //{
+        //    Instantiate(xpPrefab, transform.position, Quaternion.identity);
+        //}
 
-        Destroy(gameObject); // Odstraní nepøítele ze scény
+        Destroy(gameObject);
     }
 
     private void SpawnDamageParticle()
     {
-        if (damageParticle != null && player != null)
+        if (damageParticle != null)
         {
-            // Vektor smìrem od hráèe k nepøíteli (v 2D)
-            Vector2 direction = (Vector2)(transform.position - player.position);
-
-            // Úhel otoèení ve stupních (pro 2D)
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-            // Otoèení efektu tak, aby smìøoval od hráèe
-            Quaternion particleRotation = Quaternion.Euler(0, 0, angle);
-
-            // Spawn èástic s otoèením
-            damageParticleInstance = Instantiate(damageParticle, transform.position, particleRotation);
+            Instantiate(damageParticle, transform.position, Quaternion.identity);
         }
     }
-
 }

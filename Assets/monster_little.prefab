@@ -249,12 +249,9 @@ MonoBehaviour:
   damageToPlayer: 10
   damageRange: 1
   damageInterval: 1
-  isSpider: 0
-  isBig: 0
-  isFat: 0
-  isLittle: 1
-  xpPrefab: {fileID: 0}
+  npcAggroRange: 3
   damageParticle: {fileID: 4497852029954134139, guid: 3ee1453d7262e7245b858a20df5d76da, type: 3}
+  moveSpeed: 1.8
 --- !u!195 &-3342283486178272394
 NavMeshAgent:
   m_ObjectHideFlags: 0
