@@ -3,23 +3,11 @@ using UnityEngine.SceneManagement;
 
 public class GameOverManager : MonoBehaviour
 {
-    private static GameOverManager instance;
     public GameObject gameOverPanel; // Pøipoj UI panel
     public int moneyLossOnDeath = 50; // Poèet penìz, které hráè ztratí pøi smrti
 
-    void Awake()
+    void Start()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject); // UI pøežije zmìnu scény
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false); // Na zaèátku skryté
@@ -51,15 +39,20 @@ public class GameOverManager : MonoBehaviour
     public void RestartGame()
     {
         Time.timeScale = 1f; // Obnoví èas
-        PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Reset HP
+
+        if (PlayerHealth.Instance != null)
+        {
+            PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Reset HP
+        }
 
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false); // Skryje UI
         }
 
+        SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.LoadScene(1); // Naète první scénu
-        SceneManager.sceneLoaded += OnSceneLoaded; // Po naètení nastaví hráèe
+
         LoseMoneyOnDeath(); // Odebere peníze po smrti
     }
 
@@ -80,7 +73,10 @@ public class GameOverManager : MonoBehaviour
 
     public void QuitGame()
     {
-        PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Nastaví HP na max
+        if (PlayerHealth.Instance != null)
+        {
+            PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Nastaví HP na max
+        }
         Application.Quit(); // Ukonèí hru
     }
 }
