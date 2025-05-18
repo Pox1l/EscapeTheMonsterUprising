@@ -106,6 +106,19 @@ public class CommandLine : MonoBehaviour
                 ShowFeedback("Increased rescued NPCs by 1!");
                 Debug.Log("Increased rescued NPCs by 1!");
                 break;
+            case "xp":
+                if (PlayerHealth.Instance != null)
+                {
+                    Player_XP.Instance.AddXP(500);
+                    ShowFeedback("Player added 50XP");
+                    Debug.Log("Player  added 50XP");
+                }
+                else
+                {
+                    ShowFeedback("PlayerHealth instance not found!");
+                    Debug.LogError("PlayerHealth instance not found!");
+                }
+                break;
 
             default:
                 ShowFeedback("Unknown command: " + command);

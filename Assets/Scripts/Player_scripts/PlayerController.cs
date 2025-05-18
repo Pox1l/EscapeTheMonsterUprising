@@ -1,44 +1,35 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    // Pole, které chceme upravovat přes upgrade manager
+    [SerializeField]
+    private float _moveSpeed = 5f;
 
+    // Veřejná vlastnost pro bezpečný přístup k rychlosti pohybu
+    public float moveSpeed
+    {
+        get { return _moveSpeed; }
+        set { _moveSpeed = value; }
+    }
 
     public Rigidbody2D rb;
     public Animator animator;
 
     Vector2 movement;
 
-   
-   
-
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
     void Update()
     {
-        
+        movement.x = Input.GetAxisRaw("Horizontal");
+        movement.y = Input.GetAxisRaw("Vertical");
 
-        movement.x = Input.GetAxisRaw("Horizontal") * moveSpeed;
-        movement.y = Input.GetAxisRaw("Vertical") * moveSpeed;
-
-        animator.SetFloat("Horizontal",movement.x);
+        animator.SetFloat("Horizontal", movement.x);
         animator.SetFloat("Vertical", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
-     
     }
+
     private void FixedUpdate()
     {
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.deltaTime);
+        rb.MovePosition(rb.position + movement * _moveSpeed * Time.fixedDeltaTime);
     }
-
-   
-
 }

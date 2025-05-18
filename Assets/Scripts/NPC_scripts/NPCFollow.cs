@@ -1,32 +1,42 @@
 using UnityEngine;
+using UnityEngine.AI;
 using TMPro;
+
 
 public class NPCFollow : MonoBehaviour
 {
-
     [Header("Particle")]
     [SerializeField] private ParticleSystem exportParticle;
 
     private ParticleSystem exportParticleInstance;
 
-    public Transform player; // Hráèùv Transform
-    public float followSpeed = 3f; // Rychlost sledování
+    public Transform player;
+    public float followSpeed = 3f;
     public Vector2 rightTopOffset = new Vector2(1f, 1f);
     public Vector2 leftTopOffset = new Vector2(-1f, 1f);
     private Vector2 assignedOffset;
+
     private bool isFollowing = false;
     private bool inRange = false;
 
     private Animator animator;
+    private NavMeshAgent agent;
+
     public static int followingNPCCount = 0;
     private const int maxFollowingNPCs = 2;
 
     public TextMeshProUGUI npcCountText;
-    private HatchManager hatchManager; // Odkaz na HatchManager
+    private HatchManager hatchManager;
 
     private void Start()
     {
         animator = GetComponent<Animator>();
+        agent = GetComponent<NavMeshAgent>();
+
+        agent.updateRotation = false;
+        agent.updateUpAxis = false;
+        agent.speed = followSpeed;
+
         FindPlayer();
         UpdateNPCCountUI();
     }
@@ -55,52 +65,33 @@ public class NPCFollow : MonoBehaviour
             }
         }
 
-        if (isFollowing)
+        if (isFollowing && player != null)
         {
-            FollowPlayer();
+            Vector2 targetPos = (Vector2)player.position + assignedOffset;
+            agent.SetDestination(targetPos);
+
+            Vector2 velocity = agent.velocity;
+            float speed = velocity.magnitude;
+            Vector2 dir = velocity.normalized;
+
+            animator.SetFloat("Horizontal", dir.x);
+            animator.SetFloat("Vertical", dir.y);
+            animator.SetFloat("Speed", speed);
         }
         else
         {
             animator.SetFloat("Speed", 0);
-        }
-    }
-
-    private void FollowPlayer()
-    {
-        if (player != null)
-        {
-            Vector2 targetPosition = (Vector2)player.position + assignedOffset;
-            Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
-            float speed = (targetPosition - (Vector2)transform.position).magnitude;
-
-            transform.position = Vector2.MoveTowards(transform.position, targetPosition, followSpeed * Time.deltaTime);
-
-            animator.SetFloat("Horizontal", direction.x);
-            animator.SetFloat("Vertical", direction.y);
-            animator.SetFloat("Speed", speed);
+            agent.ResetPath();
         }
     }
 
     private void StartFollowing()
     {
-        if (followingNPCCount == 0)
-        {
-            assignedOffset = rightTopOffset;
-        }
-        else if (followingNPCCount == 1)
-        {
-            assignedOffset = leftTopOffset;
-        }
-        else
-        {
-            Debug.LogWarning("Unexpected follow count. No offset assigned.");
-            return;
-        }
-
+        assignedOffset = followingNPCCount == 0 ? rightTopOffset : leftTopOffset;
         isFollowing = true;
         followingNPCCount++;
         UpdateNPCCountUI();
-        Debug.Log($"NPC started following. Assigned offset: {assignedOffset}. Total following NPCs: {followingNPCCount}");
+        Debug.Log($"NPC started following. Offset: {assignedOffset}. Following: {followingNPCCount}");
     }
 
     private void StopFollowing()
@@ -109,7 +100,65 @@ public class NPCFollow : MonoBehaviour
         assignedOffset = Vector2.zero;
         followingNPCCount--;
         UpdateNPCCountUI();
-        Debug.Log("NPC stopped following. Total following NPCs: " + followingNPCCount);
+        Debug.Log("NPC stopped following.");
+    }
+
+    private void OnTriggerEnter2D(Collider2D collider2D)
+    {
+        if (collider2D.CompareTag("Player"))
+        {
+            inRange = true;
+        }
+
+        if (collider2D.CompareTag("Hatch") && isFollowing)
+        {
+            RescueNPC();
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collider)
+    {
+        if (collider.CompareTag("Player"))
+        {
+            inRange = false;
+        }
+    }
+
+    private void RescueNPC()
+    {
+        SpawnDamageParticle();
+        Debug.Log($"NPC {gameObject.name} zachránìno!");
+        isFollowing = false;
+        followingNPCCount--;
+        UpdateNPCCountUI();
+
+        // Ujisti se, že hatchManager existuje
+        if (hatchManager == null)
+        {
+            hatchManager = FindObjectOfType<HatchManager>();
+            if (hatchManager == null)
+            {
+                Debug.LogError("HatchManager nebyl nalezen v scénì!");
+                return; // Pøerušíme funkci, protože nemáme kam pøidat zachránìné NPC
+            }
+        }
+
+        hatchManager.AddRescuedNPC();
+
+        Destroy(gameObject);
+
+        PlayerMoney.Instance.AddMoney(50);
+        Player_XP.Instance.AddXP(10);
+    }
+
+
+    private void FindPlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
     }
 
     private void UpdateNPCCountUI()
@@ -120,64 +169,11 @@ public class NPCFollow : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collider2D)
+    private void SpawnDamageParticle()
     {
-        if (collider2D.CompareTag("Player"))
+        if (exportParticle != null)
         {
-            Debug.Log("Player entered interaction range.");
-            inRange = true;
-        }
-
-        // Pokud NPC vstoupí do bunkru
-        if (collider2D.CompareTag("Hatch") && isFollowing)
-        {
-            RescueNPC();
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D collider2D)
-    {
-        if (collider2D.CompareTag("Player"))
-        {
-            Debug.Log("Player exited interaction range.");
-            inRange = false;
-        }
-    }
-
-    private void RescueNPC()
-    {
-        SpawnDamageParticle();
-        Debug.Log($"NPC {gameObject.name} zachránìno!");
-        isFollowing = false; // Pøestane sledovat hráèe
-        followingNPCCount--; // Snížení poètu sledujících NPC
-        UpdateNPCCountUI(); // Aktualizace UI
-
-        hatchManager = FindObjectOfType<HatchManager>();
-        if (hatchManager != null)
-        {
-            hatchManager.AddRescuedNPC();
-            Destroy(gameObject); // NPC zmizí
-        }
-
-        // Pøidání penìz hráèi po zachránìní NPC
-        PlayerMoney.Instance.AddMoney(50); // Pøedpokládané množství penìz, které se pøidá za zachránìné NPC
-        Player_XP.Instance.AddXP(10);
-
-
-    }
-
-
-    private void FindPlayer()
-    {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-            Debug.Log("Player found and assigned to NPC.");
-        }
-        else
-        {
-            Debug.LogWarning("Player not found in the scene.");
+            exportParticleInstance = Instantiate(exportParticle, transform.position, Quaternion.identity);
         }
     }
 
@@ -187,17 +183,6 @@ public class NPCFollow : MonoBehaviour
         {
             followingNPCCount--;
             UpdateNPCCountUI();
-            Debug.Log("NPC destroyed. Total following NPCs: " + followingNPCCount);
         }
     }
-
-    private void SpawnDamageParticle()
-    {
-        
-            exportParticleInstance = Instantiate(exportParticle, transform.position, Quaternion.identity);
-        
-    }
-
-
-
 }

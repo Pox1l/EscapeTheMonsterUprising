@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,12 +7,12 @@ public class PlayerWeaponManager : MonoBehaviour
 {
     public static PlayerWeaponManager Instance { get; private set; }
 
-    [SerializeField] private Transform gunHoldPoint; // Bod pøipojení zbranì
-    private GameObject currentGun; // Aktuální zbraò hráèe
-    private string currentWeaponName; // Jméno aktuální zbranì
+    [SerializeField] private Transform gunHoldPoint;   // Bod pÅ™ipojenÃ­ zbranÄ›
+    private GameObject currentGun;                     // AktuÃ¡lnÃ­ zbraÅˆ hrÃ¡Äe
+    private string currentWeaponName;                  // JmÃ©no aktuÃ¡lnÃ­ zbranÄ›
 
-    private string saveFilePath; // Cesta k JSON souboru
-    private List<string> purchasedWeapons; // Seznam zakoupenıch zbraní
+    private string saveFilePath;                       // Cesta k JSON souboru
+    private List<string> purchasedWeapons;             // Seznam zakoupenÃ½ch zbranÃ­
 
     private void Awake()
     {
@@ -21,53 +21,43 @@ public class PlayerWeaponManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
-        DontDestroyOnLoad(gameObject); // Pøetrvá mezi scénami
+        DontDestroyOnLoad(gameObject);                 // PÅ™etrvÃ¡ mezi scÃ©nami
     }
 
     private void Start()
     {
-        Debug.Log("GunHoldPoint: " + gunHoldPoint);
         saveFilePath = Application.persistentDataPath + "/purchasedWeapons.json";
         LoadPurchasedWeapons();
 
-        if (!string.IsNullOrEmpty(currentWeaponName))
-        {
-            LoadWeapon(currentWeaponName); // Naète uloenou zbraò
-        }
+        // Najdeme holder, pokud nenÃ­ ruÄnÄ› pÅ™iÅ™azen vâ€¯Inspectoru
+        if (gunHoldPoint == null) gunHoldPoint = FindGunHoldPoint();
+
+        if (!string.IsNullOrEmpty(currentWeaponName))  // naÄti uloÅ¾enou zbraÅˆ
+            LoadWeapon(currentWeaponName);
     }
+    private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
+    private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Zkontrolujeme, zda je gunHoldPoint stále pøiøazenı
+        if (gunHoldPoint == null || !gunHoldPoint)
+            gunHoldPoint = FindGunHoldPoint();
+
         if (gunHoldPoint == null)
         {
-            gunHoldPoint = GameObject.Find("GunHolder")?.transform;
-
-            if (gunHoldPoint == null)
-            {
-                Debug.LogError("GunHoldPoint nebyl nalezen! Ujistìte se, e je v hierarchii scény.");
-            }
+            Debug.LogError("GunHoldPoint sâ€¯tagem 'GunHolder' nebyl ve scÃ©nÄ› nalezen.");
+            return;
         }
 
-        // Naèteme zbraò, pokud je nìjaká pøiøazena
-        if (!string.IsNullOrEmpty(currentWeaponName) && gunHoldPoint != null)
-        {
+        if (!string.IsNullOrEmpty(currentWeaponName))
             LoadWeapon(currentWeaponName);
-        }
     }
 
-    private void OnEnable()
+    private Transform FindGunHoldPoint()
     {
-        // Zaregistrujeme metodu pro naètení scény
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        // Odregistrování metody pro naètení scény
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        GameObject obj = GameObject.FindGameObjectWithTag("GunHolder");
+        return obj != null ? obj.transform : null;
     }
 
     private void LoadPurchasedWeapons()
@@ -77,103 +67,76 @@ public class PlayerWeaponManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             purchasedWeapons = JsonUtility.FromJson<WeaponSaveData>(json).weapons;
         }
-        else
-        {
-            purchasedWeapons = new List<string>();
-        }
+        else purchasedWeapons = new List<string>();
     }
 
     private void SavePurchasedWeapons()
     {
-        WeaponSaveData saveData = new WeaponSaveData { weapons = purchasedWeapons };
-        string json = JsonUtility.ToJson(saveData, true);
-        File.WriteAllText(saveFilePath, json);
+        var saveData = new WeaponSaveData { weapons = purchasedWeapons };
+        File.WriteAllText(saveFilePath, JsonUtility.ToJson(saveData, true));
     }
 
+    /*EQUIP / REMOVE*/
     public void EquipWeapon(GameObject weaponPrefab)
     {
-        RemoveWeapon(); // Odstraò starou zbraò
+        if (gunHoldPoint == null || !gunHoldPoint)
+            gunHoldPoint = FindGunHoldPoint();
 
-        // Vytvoø novou zbraò a pøipoj ji k bodu
-        currentGun = Instantiate(weaponPrefab, gunHoldPoint.position, Quaternion.identity, gunHoldPoint);
-        currentWeaponName = weaponPrefab.name; // Uloí název nové zbranì
+        if (gunHoldPoint == null)
+        {
+            Debug.LogError("GunHoldPoint sâ€¯tagem 'GunHolder' nebyl nalezen â€“ zbraÅˆ se nevybavÃ­.");
+            return;
+        }
+
+        RemoveWeapon();   // zniÄ starou
+
+        currentGun = Instantiate(weaponPrefab,
+                                 gunHoldPoint.position,
+                                 Quaternion.identity,
+                                 gunHoldPoint);
+        currentWeaponName = weaponPrefab.name;
     }
-
-    public bool IsWeaponEquipped(string weaponName)
-    {
-        return currentWeaponName == weaponName;
-    }
-
 
     public void RemoveWeapon()
     {
-        if (currentGun != null)
-        {
-            Destroy(currentGun);
-            currentGun = null;
-            currentWeaponName = null;
-        }
+        if (currentGun == null) return;
+        Destroy(currentGun);
+        currentGun = null;
+        currentWeaponName = null;
     }
 
+    public bool IsWeaponEquipped(string weaponName) => currentWeaponName == weaponName;
     public void PurchaseWeapon(string weaponName)
     {
-        if (!purchasedWeapons.Contains(weaponName))
-        {
-            purchasedWeapons.Add(weaponName);
-            SavePurchasedWeapons();
-        }
+        if (purchasedWeapons.Contains(weaponName)) return;
+        purchasedWeapons.Add(weaponName);
+        SavePurchasedWeapons();
     }
-
-    public bool IsWeaponPurchased(string weaponName)
-    {
-        return purchasedWeapons.Contains(weaponName);
-    }
+    public bool IsWeaponPurchased(string weaponName) => purchasedWeapons.Contains(weaponName);
 
     private void LoadWeapon(string weaponName)
     {
-        // Najde a naète zbraò podle názvu
-        GameObject weaponPrefab = Resources.Load<GameObject>("Weapons/" + weaponName);
-
-        if (weaponPrefab != null)
-        {
-            EquipWeapon(weaponPrefab);
-        }
-        else
-        {
-            Debug.LogError("Weapon not found: " + weaponName);
-        }
+        GameObject prefab = Resources.Load<GameObject>("Weapons/" + weaponName);
+        if (prefab != null) EquipWeapon(prefab);
+        else Debug.LogError("Weapon not found: " + weaponName);
     }
+
     private void Update()
     {
-        if (currentGun != null)
-        {
-            RotateWeapon(); // Rotace zbranì na základì pozice myši
-        }
+        if (currentGun != null) RotateWeapon();
     }
+
     private void RotateWeapon()
     {
-        // Získání pozice myši v herním svìtì
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f; // Ujistíme se, e souøadnice Z je 0
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
 
-        // Smìr od zbranì k myši
-        Vector3 direction = mousePosition - currentGun.transform.position;
+        Vector3 dir = mousePos - currentGun.transform.position;
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        // Vıpoèet úhlu v radiánech a konverze na stupnì
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        // Rotace zbranì podle smìru myši
         currentGun.transform.rotation = Quaternion.Euler(0, 0, angle);
-
-        // Pokud je úhel vìtší ne 90° nebo menší ne -90°, pøeklopíme zbraò
-        if (angle > 90 || angle < -90)
-        {
-            currentGun.transform.localScale = new Vector3(1, -1, 1); // Flip Y
-        }
-        else
-        {
-            currentGun.transform.localScale = new Vector3(1, 1, 1); // Normální smìr
-        }
+        currentGun.transform.localScale =
+            (angle > 90 || angle < -90) ? new Vector3(1, -1, 1) : Vector3.one;
     }
 }
 
