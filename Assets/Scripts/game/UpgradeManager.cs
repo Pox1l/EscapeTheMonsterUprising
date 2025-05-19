@@ -5,37 +5,55 @@ using TMPro;
 
 public class UpgradeManager : MonoBehaviour
 {
-    /* ---------- UI reference fields (přetáhni v Inspectoru) ---------- */
-    [Header("UI Refs")]
-    [SerializeField] private Button buyButton;
-    [SerializeField] private Button resetButton;
-    [SerializeField] private TextMeshProUGUI levelText;
-    [SerializeField] private TextMeshProUGUI costText;
-    [SerializeField] private TextMeshProUGUI msgText;
+    /* ---------- UI ---------- */
+    [Header("Speed UI")]
+    [SerializeField] private Button buySpeedBtn;
+    [SerializeField] private TextMeshProUGUI speedLevelTxt;
+    [SerializeField] private TextMeshProUGUI speedCostTxt;
 
-    [Header("Config")]
-    [SerializeField] private float speedIncrement = 0.1f;          // kolik přidá každý lvl
-    [SerializeField] private int[] costs = { 20, 40, 80, 160, 320 }; // cena lvl 0‑4
+    [Header("Regen UI")]
+    [SerializeField] private Button buyRegenBtn;
+    [SerializeField] private TextMeshProUGUI regenLevelTxt;
+    [SerializeField] private TextMeshProUGUI regenCostTxt;
+
+    [Header("Common UI")]
+    [SerializeField] private Button resetBtn;
+    [SerializeField] private TextMeshProUGUI msgTxt;
+
+    /* ---------- config ---------- */
+    [Header("Speed Config")]
+    [SerializeField] private float speedIncrement = 0.1f;
+    [SerializeField] private int[] speedCosts = { 20, 40, 80, 160, 320 };
+
+    [Header("Regen Config")]
+    [SerializeField] private float regenIncrement = 1f;           // +1 HP/s každé lvl
+    [SerializeField] private int[] regenCosts = { 30, 60, 120, 240 };
 
     /* ---------- runtime ---------- */
     private PlayerController playerController;
+    private PlayerHealth playerHealth;
 
-    private float baseSpeed;                        // NEMĚNNÁ původní rychlost
-    private int currentLvl;                       // 0‑5
-    private const string PREF_LVL = "SpeedUpgradeLvl";
-    private const string PREF_SPEED = "BasePlayerSpeed";
+    private float baseSpeed;
+    private int speedLvl;
+    private int regenLvl;
 
-    /* ---------------------------------------------------------------- */
+    private const string PREF_SPEED_LVL = "SpeedUpgradeLvl";
+    private const string PREF_SPEED_BASE = "BasePlayerSpeed";
+    private const string PREF_REGEN_LVL = "RegenUpgradeLvl";
+
+    /* ---------- životní cyklus ---------- */
     private void Awake()
     {
         SceneManager.sceneLoaded += (_, __) => RebindPlayer();
-        RebindPlayer();                              // pokus hned při startu
+        RebindPlayer();
     }
 
     private void Start()
     {
-        buyButton.onClick.AddListener(Buy);
-        resetButton.onClick.AddListener(ResetUpgrades);
+        buySpeedBtn.onClick.AddListener(BuySpeed);
+        buyRegenBtn.onClick.AddListener(BuyRegen);
+        resetBtn.onClick.AddListener(ResetAll);
+
         RefreshUI();
     }
 
@@ -44,95 +62,127 @@ public class UpgradeManager : MonoBehaviour
         SceneManager.sceneLoaded -= (_, __) => RebindPlayer();
     }
 
-    /* ---------- vyhledání / znovupřiřazení hráče ---------- */
+    /* ---------- player binding ---------- */
     private void RebindPlayer()
     {
-        GameObject playerGO = GameObject.FindWithTag("Player");
-        playerController = playerGO ? playerGO.GetComponent<PlayerController>() : null;
-
-        if (!playerController)
+        GameObject go = GameObject.FindWithTag("Player");
+        if (!go)
         {
-            Debug.LogWarning("UpgradeManager: PlayerController nebyl nalezen.");
+            playerController = null;
+            playerHealth = null;
             return;
         }
 
-        // Základní rychlost načteme z PlayerPrefs, případně uložíme poprvé
-        if (PlayerPrefs.HasKey(PREF_SPEED))
-            baseSpeed = PlayerPrefs.GetFloat(PREF_SPEED);
+        playerController = go.GetComponent<PlayerController>();
+        playerHealth = go.GetComponent<PlayerHealth>();
+
+        /* --- SPEED základ --- */
+        if (PlayerPrefs.HasKey(PREF_SPEED_BASE))
+            baseSpeed = PlayerPrefs.GetFloat(PREF_SPEED_BASE);
         else
         {
-            baseSpeed = playerController.moveSpeed;   // rychlost z prefab‑u
-            PlayerPrefs.SetFloat(PREF_SPEED, baseSpeed);
+            baseSpeed = playerController.moveSpeed;
+            PlayerPrefs.SetFloat(PREF_SPEED_BASE, baseSpeed);
         }
 
-        currentLvl = PlayerPrefs.GetInt(PREF_LVL, 0);
+        speedLvl = PlayerPrefs.GetInt(PREF_SPEED_LVL, 0);
+        regenLvl = PlayerPrefs.GetInt(PREF_REGEN_LVL, 0);
+
         ApplySpeed();
+        ApplyRegen();
         RefreshUI();
     }
 
-    /* ---------- upgrade ---------- */
-    private void Buy()
+    /* ---------- upgrade nákup ---------- */
+    private void BuySpeed()
     {
-        if (!EnsurePlayer()) return;
-        if (currentLvl >= costs.Length) return;  // už max
+        if (!EnsurePlayer() || speedLvl >= speedCosts.Length) return;
 
-        int price = costs[currentLvl];
-        if (!Player_XP.Instance.HasEnoughXP(price))
-        {
-            Flash("Nedostatek XP!");
-            return;
-        }
+        int cost = speedCosts[speedLvl];
+        if (!Player_XP.Instance.HasEnoughXP(cost)) { Flash("Nedostatek XP!"); return; }
 
-        Player_XP.Instance.SpendXP(price);
-        currentLvl++;
-        PlayerPrefs.SetInt(PREF_LVL, currentLvl);
+        Player_XP.Instance.SpendXP(cost);
+        speedLvl++;
+        PlayerPrefs.SetInt(PREF_SPEED_LVL, speedLvl);
 
         ApplySpeed();
         RefreshUI();
-        Flash("+0.1 speed");
+        Flash("+0.1 k rychlosti");
+    }
+
+    private void BuyRegen()
+    {
+        if (!EnsurePlayer() || regenLvl >= regenCosts.Length) return;
+
+        int cost = regenCosts[regenLvl];
+        if (!Player_XP.Instance.HasEnoughXP(cost)) { Flash("Nedostatek XP!"); return; }
+
+        Player_XP.Instance.SpendXP(cost);
+        regenLvl++;
+        PlayerPrefs.SetInt(PREF_REGEN_LVL, regenLvl);
+
+        ApplyRegen();
+        RefreshUI();
+        Flash($"+{regenIncrement} HP/5s");
     }
 
     /* ---------- reset ---------- */
-    private void ResetUpgrades()
+    private void ResetAll()
     {
         if (!EnsurePlayer()) return;
 
-        currentLvl = 0;
-        PlayerPrefs.SetInt(PREF_LVL, currentLvl);
+        speedLvl = 0;
+        regenLvl = 0;
+        PlayerPrefs.SetInt(PREF_SPEED_LVL, speedLvl);
+        PlayerPrefs.SetInt(PREF_REGEN_LVL, regenLvl);
 
         ApplySpeed();
+        ApplyRegen();
         RefreshUI();
-        Flash("Upgrady resetovany");
+        Flash("Vse resetovano");
     }
 
-    /* ---------- společné pomocné funkce ---------- */
+    /* ---------- apply helpers ---------- */
     private void ApplySpeed()
     {
-        playerController.moveSpeed = baseSpeed + currentLvl * speedIncrement;
+        playerController.moveSpeed = baseSpeed + speedLvl * speedIncrement;
+    }
+
+    private void ApplyRegen()
+    {
+        playerHealth.regenPerSec = regenLvl * regenIncrement;
+    }
+
+
+    /* ---------- UI helpers ---------- */
+    private void RefreshUI()
+    {
+        /* speed */
+        bool speedMax = speedLvl >= speedCosts.Length;
+        speedLevelTxt.text = $"Speed lvl: {speedLvl}/{speedCosts.Length}";
+        speedCostTxt.text = speedMax ? "MAX" : $"Cost: {speedCosts[speedLvl]} XP";
+        buySpeedBtn.gameObject.SetActive(!speedMax);
+
+        /* regen */
+        bool regenMax = regenLvl >= regenCosts.Length;
+        regenLevelTxt.text = $"Regen lvl: {regenLvl}/{regenCosts.Length}";
+        regenCostTxt.text = regenMax ? "MAX" : $"Cost: {regenCosts[regenLvl]} XP";
+        buyRegenBtn.gameObject.SetActive(!regenMax);
     }
 
     private bool EnsurePlayer()
     {
-        if (playerController) return true;
+        if (playerController && playerHealth) return true;
         RebindPlayer();
-        return playerController != null;
+        return playerController && playerHealth;
     }
 
-    private void RefreshUI()
+    private void Flash(string txt)
     {
-        bool maxed = currentLvl >= costs.Length;
-
-        if (levelText) levelText.text = $"Speed lvl: {currentLvl}/{costs.Length}";
-        if (costText) costText.text = maxed ? "MAX" : $"Cost: {costs[currentLvl]} XP";
-        if (buyButton) buyButton.gameObject.SetActive(!maxed);
-    }
-
-    private void Flash(string text)
-    {
-        if (!msgText) return;
-        msgText.text = text;
+        if (!msgTxt) return;
+        msgTxt.text = txt;
         CancelInvoke(nameof(ClearFlash));
         Invoke(nameof(ClearFlash), 1.5f);
     }
-    private void ClearFlash() => msgText.text = "";
+    private void ClearFlash() => msgTxt.text = "";
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,15 +9,29 @@ public class PlayerHealth : MonoBehaviour
 {
     public static PlayerHealth Instance;
 
+    /* ---------- zÃ¡kladnÃ­ HP ---------- */
+    [Header("HP")]
     public int maxHealth = 100;
     private int currentHealth;
+    public int CurrentHealth => currentHealth;
 
+    /* ---------- pasivnÃ­ REGEN ---------- */
+    [Header("Passive regen")]
+    [HideInInspector] public float regenPerSec = 0f;     // urÄuje UpgradeManager
+    [SerializeField] private float regenTick = 0.25f;     //  nastavitelnÃ© v Inspectoru
+
+    private float regenTimer = 0f;
+
+
+    /* ---------- UI ---------- */
     private TextMeshProUGUI healthText;
     private Slider healthSlider;
 
-    public int CurrentHealth => currentHealth; // Získání aktuálního zdraví
+    /* ---------- uklÃ¡dÃ¡nÃ­ ---------- */
     private string filePath;
+    private int lastHealth = -1;
 
+    /* ---------- singleton ---------- */
     private void Awake()
     {
         if (Instance == null)
@@ -28,126 +42,109 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         filePath = Path.Combine(Application.persistentDataPath, "playerHealth.json");
     }
 
+    /* ---------- init ---------- */
     private void Start()
     {
         LoadHealth();
 
-        if (currentHealth == 0)
-        {
-            currentHealth = maxHealth;
-        }
+        if (currentHealth <= 0) currentHealth = maxHealth;
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    public void SetHealth(int health)
+    /* ---------- pasivnÃ­ update ---------- */
+    private void Update()
     {
-        currentHealth = Mathf.Clamp(health, 0, maxHealth);
+        if (regenPerSec > 0f && currentHealth < maxHealth)
+        {
+            regenTimer += Time.deltaTime;
+            if (regenTimer >= regenTick)
+            {
+                float hpToAdd = regenPerSec * regenTimer;
+                Heal(Mathf.RoundToInt(hpToAdd));
+                regenTimer = 0f;
+            }
+        }
+
+    }
+
+    /* ---------- veÅ™ejnÃ© API ---------- */
+    public void SetHealth(int hp)
+    {
+        currentHealth = Mathf.Clamp(hp, 0, maxHealth);
         UpdateHealthUI();
     }
 
+    public void Heal(int amount)
+    {
+        if (amount <= 0) return;
+
+        currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
+        ScreenEffectController.Instance?.PlayHealEffect();
+        SaveIfChanged();
+        UpdateHealthUI();
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        if (dmg <= 0) return;
+
+        currentHealth = Mathf.Clamp(currentHealth - dmg, 0, maxHealth);
+        ScreenEffectController.Instance?.PlayDamageEffect();
+        SaveIfChanged();
+        UpdateHealthUI();
+
+        if (currentHealth <= 0) Die();
+    }
+
+    /* ---------- UI & scene ---------- */
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"Scéna naètena: {scene.name}");
+        healthText = GameObject.Find("HealthText")?.GetComponent<TextMeshProUGUI>();
+        healthSlider = GameObject.Find("HealthSlider")?.GetComponent<Slider>();
 
-        GameObject healthTextObject = GameObject.Find("HealthText");
-        if (healthTextObject != null)
+        if (healthSlider)
         {
-            healthText = healthTextObject.GetComponent<TextMeshProUGUI>();
-        }
-
-        GameObject healthSliderObject = GameObject.Find("HealthSlider");
-        if (healthSliderObject != null)
-        {
-            healthSlider = healthSliderObject.GetComponent<Slider>();
             healthSlider.maxValue = maxHealth;
             healthSlider.value = currentHealth;
         }
-
         UpdateHealthUI();
-    }
-
-    public void Heal(int healAmount)
-    {
-        currentHealth += healAmount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-        ScreenEffectController.Instance?.PlayHealEffect();
-
-
-        if (currentHealth != lastHealth) // Ukládáme pouze pokud došlo ke zmìnì
-        {
-            SaveHealthAsync(); // Asynchronní uložení zdraví
-            lastHealth = currentHealth; // Uložení aktuálního zdraví pro srovnání
-        }
-
-        UpdateHealthUI();
-    }
-
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-        ScreenEffectController.Instance?.PlayDamageEffect();
-
-
-        if (currentHealth != lastHealth)
-        {
-            SaveHealthAsync();
-            lastHealth = currentHealth;
-        }
-
-        UpdateHealthUI();
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
     }
 
     private void UpdateHealthUI()
     {
-        if (healthText != null)
-        {
-            healthText.text = "HP: " + currentHealth;
-        }
-
-        if (healthSlider != null)
-        {
-            healthSlider.value = currentHealth;
-        }
+        if (healthText) healthText.text = $"HP: {currentHealth}";
+        if (healthSlider) healthSlider.value = currentHealth;
     }
 
+    /* ---------- smrt ---------- */
     private void Die()
     {
         Debug.Log("Player has died!");
-
-        // Najde GameOverManager ve scénì a aktivuje GameOver UI
-        GameOverManager gameOverManager = FindObjectOfType<GameOverManager>();
-        if (gameOverManager != null)
-        {
-            gameOverManager.ShowGameOverUI();
-        }
-        else
-        {
-            Debug.LogError("GameOverManager nebyl nalezen ve scénì!");
-        }
+        GameOverManager gm = FindObjectOfType<GameOverManager>();
+        if (gm) gm.ShowGameOverUI();
+        else Debug.LogError("GameOverManager nebyl nalezen!");
     }
 
-
+    /* ---------- uloÅ¾ / naÄti ---------- */
     private async void SaveHealthAsync()
     {
-        PlayerHealthData data = new PlayerHealthData();
-        data.health = currentHealth;
-
-        string json = JsonUtility.ToJson(data);
-
+        string json = JsonUtility.ToJson(new PlayerHealthData { health = currentHealth });
         await Task.Run(() => File.WriteAllText(filePath, json));
+    }
+
+    private void SaveIfChanged()
+    {
+        if (currentHealth == lastHealth) return;
+        SaveHealthAsync();
+        lastHealth = currentHealth;
     }
 
     private void LoadHealth()
@@ -155,27 +152,18 @@ public class PlayerHealth : MonoBehaviour
         if (File.Exists(filePath))
         {
             string json = File.ReadAllText(filePath);
-            PlayerHealthData data = JsonUtility.FromJson<PlayerHealthData>(json);
-            currentHealth = data.health;
+            currentHealth = JsonUtility.FromJson<PlayerHealthData>(json).health;
         }
-
-        if (currentHealth <= 0)
+        else
         {
             currentHealth = maxHealth;
             SaveHealthAsync();
         }
+        lastHealth = currentHealth;
     }
 
-    [System.Serializable]
-    public class PlayerHealthData
-    {
-        public int health;
-    }
+    private void OnApplicationQuit() => SaveHealthAsync();
 
-    private void OnApplicationQuit()
-    {
-        SaveHealthAsync();
-    }
-
-    private int lastHealth = -1;
+    /* ---------- datovÃ¡ tÅ™Ã­da ---------- */
+    [System.Serializable] private class PlayerHealthData { public int health; }
 }
