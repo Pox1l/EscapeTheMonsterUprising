@@ -9,59 +9,56 @@ public class PlayerHealth : MonoBehaviour
 {
     public static PlayerHealth Instance;
 
-    /* ---------- základní HP ---------- */
     [Header("HP")]
     public int maxHealth = 100;
     private int currentHealth;
     public int CurrentHealth => currentHealth;
 
-    /* ---------- pasivní REGEN ---------- */
     [Header("Passive regen")]
-    [HideInInspector] public float regenPerSec = 0f;     // určuje UpgradeManager
-    [SerializeField] private float regenTick = 0.25f;     //  nastavitelné v Inspectoru
-
+    [HideInInspector] public float regenPerSec = 0f;
+    [SerializeField] private float regenTick = 0.25f;
     private float regenTimer = 0f;
 
-
-    /* ---------- UI ---------- */
     private TextMeshProUGUI healthText;
     private Slider healthSlider;
 
-    /* ---------- ukládání ---------- */
     private string filePath;
     private int lastHealth = -1;
+    private bool isDead = false;
 
-    /* ---------- singleton ---------- */
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         filePath = Path.Combine(Application.persistentDataPath, "playerHealth.json");
     }
 
-    /* ---------- init ---------- */
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
     private void Start()
     {
         LoadHealth();
-
         if (currentHealth <= 0) currentHealth = maxHealth;
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        // Ručně zavoláme scénovou inicializaci UI
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    /* ---------- pasivní update ---------- */
     private void Update()
     {
+        if (isDead) return;
+
         if (regenPerSec > 0f && currentHealth < maxHealth)
         {
             regenTimer += Time.deltaTime;
@@ -72,10 +69,8 @@ public class PlayerHealth : MonoBehaviour
                 regenTimer = 0f;
             }
         }
-
     }
 
-    /* ---------- veřejné API ---------- */
     public void SetHealth(int hp)
     {
         currentHealth = Mathf.Clamp(hp, 0, maxHealth);
@@ -84,29 +79,39 @@ public class PlayerHealth : MonoBehaviour
 
     public void Heal(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0 || isDead) return;
 
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
         ScreenEffectController.Instance?.PlayHealEffect();
+        AudioManager.instance.HealClip();
         SaveIfChanged();
         UpdateHealthUI();
     }
 
     public void TakeDamage(int dmg)
     {
-        if (dmg <= 0) return;
+        if (dmg <= 0 || isDead) return;
 
         currentHealth = Mathf.Clamp(currentHealth - dmg, 0, maxHealth);
         ScreenEffectController.Instance?.PlayDamageEffect();
+        AudioManager.instance.DamageClip();
         SaveIfChanged();
         UpdateHealthUI();
 
         if (currentHealth <= 0) Die();
     }
 
-    /* ---------- UI & scene ---------- */
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        StartCoroutine(WaitAndAssignUI());
+    }
+
+    private System.Collections.IEnumerator WaitAndAssignUI()
+    {
+        yield return null;
+        yield return null;
+
+        // Vyhledání UI jen pokud existuje
         healthText = GameObject.Find("HealthText")?.GetComponent<TextMeshProUGUI>();
         healthSlider = GameObject.Find("HealthSlider")?.GetComponent<Slider>();
 
@@ -115,6 +120,7 @@ public class PlayerHealth : MonoBehaviour
             healthSlider.maxValue = maxHealth;
             healthSlider.value = currentHealth;
         }
+
         UpdateHealthUI();
     }
 
@@ -124,16 +130,17 @@ public class PlayerHealth : MonoBehaviour
         if (healthSlider) healthSlider.value = currentHealth;
     }
 
-    /* ---------- smrt ---------- */
     private void Die()
     {
         Debug.Log("Player has died!");
+        isDead = true;
+
         GameOverManager gm = FindObjectOfType<GameOverManager>();
+        AudioManager.instance.DeadClip();
         if (gm) gm.ShowGameOverUI();
         else Debug.LogError("GameOverManager nebyl nalezen!");
     }
 
-    /* ---------- ulož / načti ---------- */
     private async void SaveHealthAsync()
     {
         string json = JsonUtility.ToJson(new PlayerHealthData { health = currentHealth });
@@ -164,6 +171,9 @@ public class PlayerHealth : MonoBehaviour
 
     private void OnApplicationQuit() => SaveHealthAsync();
 
-    /* ---------- datová třída ---------- */
-    [System.Serializable] private class PlayerHealthData { public int health; }
+    [System.Serializable]
+    private class PlayerHealthData
+    {
+        public int health;
+    }
 }

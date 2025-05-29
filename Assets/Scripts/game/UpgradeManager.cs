@@ -26,7 +26,7 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private int[] speedCosts = { 20, 40, 80, 160, 320 };
 
     [Header("Regen Config")]
-    [SerializeField] private float regenIncrement = 1f;           // +1 HP/s každé lvl
+    [SerializeField] private float regenIncrement = 1f;
     [SerializeField] private int[] regenCosts = { 30, 60, 120, 240 };
 
     /* ---------- runtime ---------- */
@@ -44,8 +44,7 @@ public class UpgradeManager : MonoBehaviour
     /* ---------- životní cyklus ---------- */
     private void Awake()
     {
-        SceneManager.sceneLoaded += (_, __) => RebindPlayer();
-        RebindPlayer();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void Start()
@@ -54,12 +53,20 @@ public class UpgradeManager : MonoBehaviour
         buyRegenBtn.onClick.AddListener(BuyRegen);
         resetBtn.onClick.AddListener(ResetAll);
 
+        RebindPlayer();
         RefreshUI();
     }
 
     private void OnDestroy()
     {
-        SceneManager.sceneLoaded -= (_, __) => RebindPlayer();
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Po načtení scény znovu napoj playera
+        RebindPlayer();
+        RefreshUI();
     }
 
     /* ---------- player binding ---------- */
@@ -76,7 +83,6 @@ public class UpgradeManager : MonoBehaviour
         playerController = go.GetComponent<PlayerController>();
         playerHealth = go.GetComponent<PlayerHealth>();
 
-        /* --- SPEED základ --- */
         if (PlayerPrefs.HasKey(PREF_SPEED_BASE))
             baseSpeed = PlayerPrefs.GetFloat(PREF_SPEED_BASE);
         else
@@ -90,7 +96,6 @@ public class UpgradeManager : MonoBehaviour
 
         ApplySpeed();
         ApplyRegen();
-        RefreshUI();
     }
 
     /* ---------- upgrade nákup ---------- */
@@ -104,7 +109,7 @@ public class UpgradeManager : MonoBehaviour
         Player_XP.Instance.SpendXP(cost);
         speedLvl++;
         PlayerPrefs.SetInt(PREF_SPEED_LVL, speedLvl);
-
+        AudioManager.instance.PlayXPPickup();
         ApplySpeed();
         RefreshUI();
         Flash("+0.1 k rychlosti");
@@ -120,7 +125,7 @@ public class UpgradeManager : MonoBehaviour
         Player_XP.Instance.SpendXP(cost);
         regenLvl++;
         PlayerPrefs.SetInt(PREF_REGEN_LVL, regenLvl);
-
+        AudioManager.instance.PlayXPPickup();
         ApplyRegen();
         RefreshUI();
         Flash($"+{regenIncrement} HP/5s");
@@ -145,25 +150,29 @@ public class UpgradeManager : MonoBehaviour
     /* ---------- apply helpers ---------- */
     private void ApplySpeed()
     {
-        playerController.moveSpeed = baseSpeed + speedLvl * speedIncrement;
+        if (playerController != null)
+            playerController.moveSpeed = baseSpeed + speedLvl * speedIncrement;
     }
 
     private void ApplyRegen()
     {
-        playerHealth.regenPerSec = regenLvl * regenIncrement;
+        if (playerHealth != null)
+            playerHealth.regenPerSec = regenLvl * regenIncrement;
     }
-
 
     /* ---------- UI helpers ---------- */
     private void RefreshUI()
     {
-        /* speed */
+        if (!buySpeedBtn || !buyRegenBtn || !speedLevelTxt || !regenLevelTxt || !speedCostTxt || !regenCostTxt)
+            return;
+
+        // speed
         bool speedMax = speedLvl >= speedCosts.Length;
         speedLevelTxt.text = $"Speed lvl: {speedLvl}/{speedCosts.Length}";
         speedCostTxt.text = speedMax ? "MAX" : $"Cost: {speedCosts[speedLvl]} XP";
         buySpeedBtn.gameObject.SetActive(!speedMax);
 
-        /* regen */
+        // regen
         bool regenMax = regenLvl >= regenCosts.Length;
         regenLevelTxt.text = $"Regen lvl: {regenLvl}/{regenCosts.Length}";
         regenCostTxt.text = regenMax ? "MAX" : $"Cost: {regenCosts[regenLvl]} XP";
@@ -184,5 +193,6 @@ public class UpgradeManager : MonoBehaviour
         CancelInvoke(nameof(ClearFlash));
         Invoke(nameof(ClearFlash), 1.5f);
     }
+
     private void ClearFlash() => msgTxt.text = "";
 }

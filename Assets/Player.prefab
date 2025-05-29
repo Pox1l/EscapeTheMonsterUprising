@@ -302,6 +302,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  regenPerSec: 0
+  regenTick: 5
 --- !u!114 &6043133321688004728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -314,7 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1fde141d592a2940b74f10e77231c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 4
+  _moveSpeed: 5
   rb: {fileID: 1883577487909417955}
   animator: {fileID: 9065823874829414138}
 --- !u!114 &2143164496925155746

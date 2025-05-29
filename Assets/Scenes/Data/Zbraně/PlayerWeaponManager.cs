@@ -7,12 +7,15 @@ public class PlayerWeaponManager : MonoBehaviour
 {
     public static PlayerWeaponManager Instance { get; private set; }
 
-    [SerializeField] private Transform gunHoldPoint;   // Bod připojení zbraně
-    private GameObject currentGun;                     // Aktuální zbraň hráče
-    private string currentWeaponName;                  // Jméno aktuální zbraně
+    [SerializeField] private Transform gunHoldPoint;
+    private GameObject currentGun;
+    private string currentWeaponName;
 
-    private string saveFilePath;                       // Cesta k JSON souboru
-    private List<string> purchasedWeapons;             // Seznam zakoupených zbraní
+    private string saveFilePath;
+    private List<string> purchasedWeapons;
+
+    // Seznam build indexů scén, kde se má hledat GunHolder
+    private readonly HashSet<int> scenesWithGunHolder = new HashSet<int> { 1, 2 }; // např. 1 = Bunker, 2 = Outdoor
 
     private void Awake()
     {
@@ -22,7 +25,7 @@ public class PlayerWeaponManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);                 // Přetrvá mezi scénami
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -30,28 +33,37 @@ public class PlayerWeaponManager : MonoBehaviour
         saveFilePath = Application.persistentDataPath + "/purchasedWeapons.json";
         LoadPurchasedWeapons();
 
-        // Najdeme holder, pokud není ručně přiřazen v Inspectoru
-        if (gunHoldPoint == null) gunHoldPoint = FindGunHoldPoint();
-
-        if (!string.IsNullOrEmpty(currentWeaponName))  // načti uloženou zbraň
-            LoadWeapon(currentWeaponName);
+        if (IsSceneWithGunHolder())
+        {
+            gunHoldPoint = FindGunHoldPoint();
+            if (!string.IsNullOrEmpty(currentWeaponName))
+                LoadWeapon(currentWeaponName);
+        }
     }
+
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (gunHoldPoint == null || !gunHoldPoint)
-            gunHoldPoint = FindGunHoldPoint();
+        if (!IsSceneWithGunHolder()) return;
+
+        gunHoldPoint = FindGunHoldPoint();
 
         if (gunHoldPoint == null)
         {
-            Debug.LogError("GunHoldPoint s tagem 'GunHolder' nebyl ve scéně nalezen.");
+            Debug.LogError("GunHoldPoint s tagem 'GunHolder' nebyl ve scéně nalezen.");
             return;
         }
 
         if (!string.IsNullOrEmpty(currentWeaponName))
             LoadWeapon(currentWeaponName);
+    }
+
+    private bool IsSceneWithGunHolder()
+    {
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        return scenesWithGunHolder.Contains(currentSceneIndex);
     }
 
     private Transform FindGunHoldPoint()
@@ -67,7 +79,10 @@ public class PlayerWeaponManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             purchasedWeapons = JsonUtility.FromJson<WeaponSaveData>(json).weapons;
         }
-        else purchasedWeapons = new List<string>();
+        else
+        {
+            purchasedWeapons = new List<string>();
+        }
     }
 
     private void SavePurchasedWeapons()
@@ -76,24 +91,22 @@ public class PlayerWeaponManager : MonoBehaviour
         File.WriteAllText(saveFilePath, JsonUtility.ToJson(saveData, true));
     }
 
-    /*EQUIP / REMOVE*/
     public void EquipWeapon(GameObject weaponPrefab)
     {
-        if (gunHoldPoint == null || !gunHoldPoint)
+        if (!IsSceneWithGunHolder()) return;
+
+        if (gunHoldPoint == null)
             gunHoldPoint = FindGunHoldPoint();
 
         if (gunHoldPoint == null)
         {
-            Debug.LogError("GunHoldPoint s tagem 'GunHolder' nebyl nalezen – zbraň se nevybaví.");
+            Debug.LogError("GunHoldPoint s tagem 'GunHolder' nebyl nalezen – zbraň se nevybaví.");
             return;
         }
 
-        RemoveWeapon();   // znič starou
+        RemoveWeapon();
 
-        currentGun = Instantiate(weaponPrefab,
-                                 gunHoldPoint.position,
-                                 Quaternion.identity,
-                                 gunHoldPoint);
+        currentGun = Instantiate(weaponPrefab, gunHoldPoint.position, Quaternion.identity, gunHoldPoint);
         currentWeaponName = weaponPrefab.name;
     }
 
@@ -102,23 +115,28 @@ public class PlayerWeaponManager : MonoBehaviour
         if (currentGun == null) return;
         Destroy(currentGun);
         currentGun = null;
-        currentWeaponName = null;
     }
 
     public bool IsWeaponEquipped(string weaponName) => currentWeaponName == weaponName;
+
     public void PurchaseWeapon(string weaponName)
     {
         if (purchasedWeapons.Contains(weaponName)) return;
         purchasedWeapons.Add(weaponName);
         SavePurchasedWeapons();
     }
+
     public bool IsWeaponPurchased(string weaponName) => purchasedWeapons.Contains(weaponName);
 
     private void LoadWeapon(string weaponName)
     {
+        if (!IsSceneWithGunHolder()) return;
+
         GameObject prefab = Resources.Load<GameObject>("Weapons/" + weaponName);
-        if (prefab != null) EquipWeapon(prefab);
-        else Debug.LogError("Weapon not found: " + weaponName);
+        if (prefab != null)
+            EquipWeapon(prefab);
+        else
+            Debug.LogError("Weapon not found: " + weaponName);
     }
 
     private void Update()
@@ -135,8 +153,7 @@ public class PlayerWeaponManager : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
         currentGun.transform.rotation = Quaternion.Euler(0, 0, angle);
-        currentGun.transform.localScale =
-            (angle > 90 || angle < -90) ? new Vector3(1, -1, 1) : Vector3.one;
+        currentGun.transform.localScale = (angle > 90 || angle < -90) ? new Vector3(1, -1, 1) : Vector3.one;
     }
 }
 

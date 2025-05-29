@@ -1,52 +1,103 @@
+Ôªøusing TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class NPCSpawner : MonoBehaviour
 {
-    public GameObject[] npcPrefabs;  // Pole r˘zn˝ch NPC prefab˘
-    public Transform player;         // Reference na hr·Ëe
-    public Tilemap grassTilemap;     // Tilemap, kde se spawnujÌ NPC
-    public int minNPCCount = 3;      // Minim·lnÌ poËet NPC
-    public int maxNPCCount = 8;      // Maxim·lnÌ poËet NPC
+    [Header("Spawning")]
+    public Tilemap grassTilemap;
+    public int minNPCCount = 3;
+    public int maxNPCCount = 8;
+
+    [Header("References")]
+    public Transform player;
+
+    private GameObject[] npcPrefabs;
+    private int totalNPC;
+    private TextMeshProUGUI counter;
+
+    /* ---------- UNITY ---------- */
+    private void Awake()
+    {
+        // naƒçten√≠ v≈°ech NPC prefab≈Ø ze slo≈æky Resources/NPCs
+        npcPrefabs = Resources.LoadAll<GameObject>("NPCs");
+        Debug.Log($"Naƒçteno {npcPrefabs.Length} prefab≈Ø z Resources/NPCs");
+
+
+        if (npcPrefabs == null || npcPrefabs.Length == 0)
+            Debug.LogWarning("‚ùó ≈Ω√°dn√© NPC prefaby nebyly nalezeny ve slo≈æce Resources/NPCs!");
+
+        // najdi UI text podle tagu (jen jednou)
+        if (GameObject.FindGameObjectWithTag("NPCCountText") is { } uiObj)
+            counter = uiObj.GetComponent<TextMeshProUGUI>();
+    }
 
     private void Start()
     {
-        int npcCount = Random.Range(minNPCCount, maxNPCCount + 1); // N·hodn˝ poËet NPC
-        SpawnNPCs(npcCount);
+        int randomCount = Random.Range(minNPCCount, maxNPCCount + 1);
+        SpawnNPCs(randomCount);
+
+        foreach (NPCFollow npc in FindObjectsOfType<NPCFollow>())
+            if (npc.Spawner == null) Register(npc);
+
+        UpdateCounter();
     }
 
+    /* ---------- REGISTRACE A ODEB√çR√ÅN√ç ---------- */
+    public void Register(NPCFollow npc)
+    {
+        if (npc.Spawner != null) return;
+
+        npc.Spawner = this;
+        npc.onRescued += HandleNPCRescued;
+        npc.onRemoved += HandleNPCRemoved;
+        totalNPC++;
+        UpdateCounter();
+    }
+
+    private void HandleNPCRescued()
+    {
+        totalNPC--;
+        UpdateCounter();
+    }
+
+    private void HandleNPCRemoved()
+    {
+        totalNPC--;
+        UpdateCounter();
+    }
+
+    private void UpdateCounter()
+    {
+        if (counter) counter.text = $"NPC remains: {totalNPC}";
+    }
+
+    /* ---------- SPAWN ---------- */
     private void SpawnNPCs(int npcCount)
     {
+        if (npcPrefabs == null || npcPrefabs.Length == 0) return;
+
         BoundsInt bounds = grassTilemap.cellBounds;
-        int spawnedCount = 0;
+        int spawned = 0;
 
-        while (spawnedCount < npcCount)
+        while (spawned < npcCount)
         {
-            Vector3Int randomCell = new Vector3Int(
+            Vector3Int cell = new(
                 Random.Range(bounds.xMin, bounds.xMax),
-                Random.Range(bounds.yMin, bounds.yMax),
-                0
-            );
+                Random.Range(bounds.yMin, bounds.yMax), 0);
 
-            if (grassTilemap.HasTile(randomCell))
+            if (!grassTilemap.HasTile(cell)) continue;
+
+            Vector3 pos = grassTilemap.CellToWorld(cell) + new Vector3(.5f, .5f, 0);
+            GameObject prefab = npcPrefabs[Random.Range(0, npcPrefabs.Length)];
+            GameObject go = Instantiate(prefab, pos, Quaternion.identity);
+
+            if (go.TryGetComponent(out NPCFollow follow))
             {
-                Vector3 spawnPosition = grassTilemap.CellToWorld(randomCell) + new Vector3(0.5f, 0.5f, 0);
-
-                // N·hodn˝ v˝bÏr NPC prefab
-                GameObject randomNPCPrefab = npcPrefabs[Random.Range(0, npcPrefabs.Length)];
-
-                // Vytvo¯enÌ NPC
-                GameObject npc = Instantiate(randomNPCPrefab, spawnPosition, Quaternion.identity);
-
-                // P¯i¯azenÌ reference na hr·Ëe
-                NPCFollow followerScript = npc.GetComponent<NPCFollow>();
-                if (followerScript != null)
-                {
-                    followerScript.player = player;
-                }
-
-                spawnedCount++;
+                follow.player = player;
+                Register(follow);
             }
+            spawned++;
         }
     }
 }

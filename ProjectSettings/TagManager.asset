@@ -14,8 +14,10 @@ TagManager:
   - XPText
   - MoneyText
   - MoneyChangeText
-  - DirectionArrow
   - GunHolder
+  - NPCCountText
+  - DirectionArrowNPC
+  - DirectionArrowHatch
   layers:
   - Default
   - TransparentFX

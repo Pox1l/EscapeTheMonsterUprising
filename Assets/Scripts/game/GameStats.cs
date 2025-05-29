@@ -33,6 +33,11 @@ public class GameStats : MonoBehaviour
             if (isPanelActive)
             {
                 UpdateRescuedNPCText(); // Aktualizovat text pøi otevøení panelu
+                SearchForPlayer();      // Hledání objektu s tagem "Player"
+
+                // Volání metod Player_XP pøi otevøení
+                Player_XP.Instance.FindXPUI();
+                Player_XP.Instance.UpdateXPUI();
             }
         }
     }
@@ -43,10 +48,9 @@ public class GameStats : MonoBehaviour
         {
             isPanelActive = false;
             uiPanel.SetActive(false);
-            Time.timeScale = 1f; 
+            Time.timeScale = 1f;
         }
     }
-
 
     private void UpdateRescuedNPCText()
     {
@@ -54,6 +58,21 @@ public class GameStats : MonoBehaviour
         {
             int rescuedNPCCount = SaveSystem.LoadNPCCount(); // Naètení z JSON
             rescuedNPCText.text = $"NPC saved: {rescuedNPCCount}";
+        }
+    }
+
+    // Nová funkce, která hledá objekt s tagem "Player"
+    private void SearchForPlayer()
+    {
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            Debug.Log("Player nalezen: " + player.name);
+            // Další logika zde
+        }
+        else
+        {
+            Debug.Log("Player nebyl nalezen.");
         }
     }
 }

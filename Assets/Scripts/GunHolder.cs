@@ -44,7 +44,8 @@ public class GunHolder : MonoBehaviour
             // Støelba pøi stisknutí tlaèítka myši
             if (Input.GetMouseButton(0)) // Levé tlaèítko myši
             {
-                currentGun.Shoot();
+                 currentGun.Shoot();
+                
             }
         }
     }

@@ -15,6 +15,7 @@ public class Gun : MonoBehaviour
     {
         if (Input.GetMouseButton(0) && Time.time >= nextFireTime)
         {
+            AudioManager.instance.PlayGunShot();
             Shoot();
         }
     }
@@ -26,6 +27,8 @@ public class Gun : MonoBehaviour
             Debug.LogWarning("Bullet prefab or fire point is not assigned.");
             return;
         }
+
+
 
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
         bullet.transform.Rotate(0, 0, -90);

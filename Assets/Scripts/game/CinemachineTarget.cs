@@ -18,12 +18,25 @@ public class CinemachineTarget : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Najdi hráèe v nové scénì
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null && virtualCamera != null)
+        StartCoroutine(AssignCameraTarget());
+    }
+
+    private System.Collections.IEnumerator AssignCameraTarget()
+    {
+        GameObject player = null;
+
+        // Poèkej, dokud se hráè ve scénì neobjeví
+        while (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
+            yield return null; // poèkej jeden frame
+        }
+
+        if (virtualCamera != null)
         {
             virtualCamera.Follow = player.transform;
             virtualCamera.LookAt = player.transform;
         }
     }
+
 }

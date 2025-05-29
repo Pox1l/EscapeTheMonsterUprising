@@ -8,6 +8,13 @@ public class AudioManager : MonoBehaviour
     public AudioSource sfxSource;
     public AudioSource uiSource;
 
+    public AudioClip gunShotClip;
+    public AudioClip npcRescueClip;
+    public AudioClip xpPickupClip;
+    public AudioClip damageClip;
+    public AudioClip deadClip;
+    public AudioClip healClip;
+
     private void Awake()
     {
         if (instance == null)
@@ -63,4 +70,32 @@ public class AudioManager : MonoBehaviour
         if (clip != null)
             uiSource.PlayOneShot(clip);
     }
+
+    public void PlayGunShot()
+    {
+        PlaySFX(gunShotClip);
+    }
+
+    public void PlayNPCRescue()
+    {
+        PlaySFX(npcRescueClip);
+    }
+
+    public void PlayXPPickup()
+    {
+        PlaySFX(xpPickupClip);
+    }
+    public void DamageClip()
+    {
+        PlaySFX(damageClip);
+    }
+    public void DeadClip()
+    {
+        PlaySFX(deadClip);
+    }
+    public void HealClip()
+    {
+        PlaySFX(healClip);
+    }
+
 }

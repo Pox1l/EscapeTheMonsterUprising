@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.IO;
-using UnityEngine.SceneManagement; // Pro správu scén
+using UnityEngine.SceneManagement;
 
 public class Player_XP : MonoBehaviour
 {
@@ -25,7 +25,6 @@ public class Player_XP : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Zaregistruj funkci, která bude aktualizovat XP pøi zmìnì scény
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         savePath = Path.Combine(Application.persistentDataPath, "xpData.json");
@@ -43,10 +42,11 @@ public class Player_XP : MonoBehaviour
         SaveXP();
     }
 
-    // Funkce zavolaná pøi naèítání nové scény
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        UpdateXPUI(); // Aktualizuj XP text po zmìnì scény
+        // Zkus znovu najít UI a aktualizovat
+        FindXPUI();
+        UpdateXPUI();
     }
 
     public int GetXP()
@@ -54,6 +54,7 @@ public class Player_XP : MonoBehaviour
         return currentXP;
     }
 
+    // Metoda, která zkontroluje, zda hráè má dost XP
     public bool HasEnoughXP(int amount)
     {
         return currentXP >= amount;
@@ -107,17 +108,18 @@ public class Player_XP : MonoBehaviour
         Debug.Log("XP loaded: " + currentXP);
     }
 
-    private void UpdateXPUI()
+    public void UpdateXPUI()
     {
-        if (xpText == null) FindXPUI();
+        if (xpText == null)
+            FindXPUI();
 
         if (xpText != null)
         {
-            xpText.text = "Player XP: " + currentXP; // Zobrazí "Player XP: [aktuální XP]"
+            xpText.text = "Player XP: " + currentXP;
         }
     }
 
-    private void FindXPUI()
+    public void FindXPUI()
     {
         GameObject xpTextObject = GameObject.FindWithTag("XPText");
         if (xpTextObject != null)
@@ -125,19 +127,19 @@ public class Player_XP : MonoBehaviour
             xpText = xpTextObject.GetComponent<TextMeshProUGUI>();
         }
 
-        //GameObject xpChangeTextObject = GameObject.FindWithTag("XPChangeText");
-        //if (xpChangeTextObject != null)
-        //{
-        //    xpChangeText = xpChangeTextObject.GetComponent<TextMeshProUGUI>();
-        //}
+        // Pokud chceš, mùžeš najít i xpChangeText obdobnì
+        // GameObject xpChangeTextObject = GameObject.FindWithTag("XPChangeText");
+        // if (xpChangeTextObject != null)
+        // {
+        //     xpChangeText = xpChangeTextObject.GetComponent<TextMeshProUGUI>();
+        // }
     }
-
 
     private void ShowXPChange(int amount)
     {
         if (xpChangeText != null)
         {
-            xpChangeText.text = "Player XP: " + (amount > 0 ? "+" : "") + amount.ToString() + " XP"; // Zobrazí zmìnu XP s "Player XP:"
+            xpChangeText.text = (amount > 0 ? "+" : "") + amount.ToString() + " XP";
         }
     }
 
@@ -145,6 +147,9 @@ public class Player_XP : MonoBehaviour
     private class XPData
     {
         public int xp;
-        public XPData(int xp) { this.xp = xp; }
+        public XPData(int xp)
+        {
+            this.xp = xp;
+        }
     }
 }

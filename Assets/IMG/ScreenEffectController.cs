@@ -38,10 +38,16 @@ public class ScreenEffectController : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Zastaví všechny coroutines pøi naètení nové scény
         StopAllCoroutines();
 
-        // Najdi overlaye podle názvu objektu ve scénì
+        // Napø. ignoruj scény menu, kde nejsou overlaye
+        if (scene.name == "Menu" || scene.buildIndex == 0)
+        {
+            damageOverlay = null;
+            healOverlay = null;
+            return;
+        }
+
         damageOverlay = GameObject.Find("DamageOverlay")?.GetComponent<Image>();
         healOverlay = GameObject.Find("HealOverlay")?.GetComponent<Image>();
 
@@ -50,6 +56,7 @@ public class ScreenEffectController : MonoBehaviour
         if (healOverlay == null)
             Debug.LogWarning("HealOverlay nebyl nalezen ve scénì!");
     }
+
 
     public void PlayDamageEffect()
     {

@@ -1,88 +1,134 @@
+Ôªøusing System;
 using UnityEngine;
 using UnityEngine.AI;
 using TMPro;
 
-
+[RequireComponent(typeof(Collider2D))]
 public class NPCFollow : MonoBehaviour
 {
-    [Header("Particle")]
-    [SerializeField] private ParticleSystem exportParticle;
-
-    private ParticleSystem exportParticleInstance;
-
+    [Header("General")]
     public Transform player;
-    public float followSpeed = 3f;
+    public float minWanderSpeed = 1.5f;
+    public float maxWanderSpeed = 3.5f;
+    public float wanderRadius = 5f;
+    public float minWanderInterval = 2f;
+    public float maxWanderInterval = 5f;
+
+    [Header("Offsets")]
     public Vector2 rightTopOffset = new Vector2(1f, 1f);
     public Vector2 leftTopOffset = new Vector2(-1f, 1f);
-    private Vector2 assignedOffset;
 
-    private bool isFollowing = false;
-    private bool inRange = false;
-
-    private Animator animator;
-    private NavMeshAgent agent;
-
+    [Header("UI")]
+    public TextMeshProUGUI npcCountText;
+    public TextMeshProUGUI npcRemainingText;
     public static int followingNPCCount = 0;
     private const int maxFollowingNPCs = 2;
 
-    public TextMeshProUGUI npcCountText;
-    private HatchManager hatchManager;
+    public static int totalNPCs = 0;
+    public static event Action OnNPCCountChanged;
 
-    private void Start()
+    [Header("Particles")]
+    [SerializeField] private ParticleSystem exportParticle;
+
+    public event Action onRescued;
+    public event Action onRemoved;
+    [NonSerialized] public NPCSpawner Spawner;
+
+    private Animator animator;
+    private NavMeshAgent agent;
+    private Vector2 assignedOffset;
+    private bool isFollowing = false;
+    private bool inRange = false;
+    private float wanderTimer;
+    private float currentWanderInterval;
+    private HatchManager hatchManager;
+    private bool isRemoved = false; //  NOVƒö P≈òID√ÅNO
+
+    private void Awake()
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
 
+        if (Spawner == null)
+        {
+            NPCSpawner foundSpawner = FindObjectOfType<NPCSpawner>();
+            if (foundSpawner != null)
+            {
+                foundSpawner.Register(this);
+            }
+        }
+    }
+
+    private void Start()
+    {
         agent.updateRotation = false;
         agent.updateUpAxis = false;
-        agent.speed = followSpeed;
 
         FindPlayer();
         UpdateNPCCountUI();
+
+        OnNPCCountChanged += UpdateTotalNPCUI;
+        UpdateTotalNPCUI();
+
+        ResetWander();
     }
 
     private void Update()
     {
-        if (player == null)
-        {
-            FindPlayer();
-            return;
-        }
+        if (player == null) { FindPlayer(); return; }
 
         if (inRange && Input.GetKeyDown(KeyCode.E))
         {
-            if (isFollowing)
-            {
-                StopFollowing();
-            }
-            else if (followingNPCCount < maxFollowingNPCs)
-            {
-                StartFollowing();
-            }
-            else
-            {
-                Debug.Log("Maximum number of NPCs are already following the player.");
-            }
+            if (isFollowing) StopFollowing();
+            else if (followingNPCCount < maxFollowingNPCs) StartFollowing();
         }
 
-        if (isFollowing && player != null)
+        if (isFollowing)
         {
             Vector2 targetPos = (Vector2)player.position + assignedOffset;
             agent.SetDestination(targetPos);
-
-            Vector2 velocity = agent.velocity;
-            float speed = velocity.magnitude;
-            Vector2 dir = velocity.normalized;
-
-            animator.SetFloat("Horizontal", dir.x);
-            animator.SetFloat("Vertical", dir.y);
-            animator.SetFloat("Speed", speed);
         }
         else
         {
-            animator.SetFloat("Speed", 0);
-            agent.ResetPath();
+            Wander();
         }
+
+        UpdateAnimator();
+    }
+
+    private void Wander()
+    {
+        wanderTimer -= Time.deltaTime;
+
+        if (wanderTimer <= 0f)
+        {
+            Vector2 randomDirection = UnityEngine.Random.insideUnitCircle.normalized * UnityEngine.Random.Range(1f, wanderRadius);
+            Vector2 targetPosition = (Vector2)transform.position + randomDirection;
+
+            if (NavMesh.SamplePosition(targetPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+            {
+                agent.speed = UnityEngine.Random.Range(minWanderSpeed, maxWanderSpeed);
+                agent.SetDestination(hit.position);
+            }
+
+            ResetWander();
+        }
+    }
+
+    private void ResetWander()
+    {
+        wanderTimer = UnityEngine.Random.Range(minWanderInterval, maxWanderInterval);
+    }
+
+    private void UpdateAnimator()
+    {
+        Vector2 vel = agent.velocity;
+        float spd = vel.magnitude;
+        Vector2 dir = vel.normalized;
+
+        animator.SetFloat("Horizontal", dir.x);
+        animator.SetFloat("Vertical", dir.y);
+        animator.SetFloat("Speed", spd);
     }
 
     private void StartFollowing()
@@ -91,7 +137,6 @@ public class NPCFollow : MonoBehaviour
         isFollowing = true;
         followingNPCCount++;
         UpdateNPCCountUI();
-        Debug.Log($"NPC started following. Offset: {assignedOffset}. Following: {followingNPCCount}");
     }
 
     private void StopFollowing()
@@ -100,89 +145,78 @@ public class NPCFollow : MonoBehaviour
         assignedOffset = Vector2.zero;
         followingNPCCount--;
         UpdateNPCCountUI();
-        Debug.Log("NPC stopped following.");
     }
 
-    private void OnTriggerEnter2D(Collider2D collider2D)
+    private void OnTriggerEnter2D(Collider2D col)
     {
-        if (collider2D.CompareTag("Player"))
-        {
-            inRange = true;
-        }
-
-        if (collider2D.CompareTag("Hatch") && isFollowing)
-        {
-            RescueNPC();
-        }
+        if (col.CompareTag("Player")) inRange = true;
+        if (col.CompareTag("Hatch") && isFollowing) RescueNPC();
     }
 
-    private void OnTriggerExit2D(Collider2D collider)
+    private void OnTriggerExit2D(Collider2D col)
     {
-        if (collider.CompareTag("Player"))
-        {
-            inRange = false;
-        }
+        if (col.CompareTag("Player")) inRange = false;
     }
 
     private void RescueNPC()
     {
-        SpawnDamageParticle();
-        Debug.Log($"NPC {gameObject.name} zachr·nÏno!");
+        if (isRemoved) return; //  chr√°n√≠ p≈ôed dvoj√≠m zavol√°n√≠m
+        isRemoved = true;
+
+        if (exportParticle) Instantiate(exportParticle, transform.position, Quaternion.identity);
+
         isFollowing = false;
         followingNPCCount--;
         UpdateNPCCountUI();
+        onRescued?.Invoke();
 
-        // Ujisti se, ûe hatchManager existuje
         if (hatchManager == null)
-        {
             hatchManager = FindObjectOfType<HatchManager>();
-            if (hatchManager == null)
-            {
-                Debug.LogError("HatchManager nebyl nalezen v scÈnÏ!");
-                return; // P¯eruöÌme funkci, protoûe nem·me kam p¯idat zachr·nÏnÈ NPC
-            }
-        }
+        hatchManager?.AddRescuedNPC();
 
-        hatchManager.AddRescuedNPC();
-
-        Destroy(gameObject);
-
+        AudioManager.instance.PlayNPCRescue();
         PlayerMoney.Instance.AddMoney(50);
         Player_XP.Instance.AddXP(10);
-    }
 
+        totalNPCs--;
+        OnNPCCountChanged?.Invoke();
+
+        Destroy(gameObject);
+    }
 
     private void FindPlayer()
     {
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            player = playerObj.transform;
-        }
+        if (GameObject.FindGameObjectWithTag("Player") is { } pl)
+            player = pl.transform;
     }
 
     private void UpdateNPCCountUI()
     {
-        if (npcCountText != null)
-        {
+        if (npcCountText)
             npcCountText.text = $"Following NPCs: {followingNPCCount} / {maxFollowingNPCs}";
-        }
     }
 
-    private void SpawnDamageParticle()
+    private void UpdateTotalNPCUI()
     {
-        if (exportParticle != null)
-        {
-            exportParticleInstance = Instantiate(exportParticle, transform.position, Quaternion.identity);
-        }
+        if (npcRemainingText)
+            npcRemainingText.text = $"NPC Remaining: {totalNPCs}";
     }
 
     private void OnDestroy()
     {
+        if (isRemoved) return; //  u≈æ byl odstranƒõn/zachr√°nƒõn
+        isRemoved = true;
+
         if (isFollowing)
         {
             followingNPCCount--;
             UpdateNPCCountUI();
         }
+
+        totalNPCs--;
+        OnNPCCountChanged?.Invoke();
+        OnNPCCountChanged -= UpdateTotalNPCUI;
+
+        onRemoved?.Invoke();
     }
 }
