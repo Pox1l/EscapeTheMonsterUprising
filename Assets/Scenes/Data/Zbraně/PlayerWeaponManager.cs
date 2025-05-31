@@ -8,14 +8,17 @@ public class PlayerWeaponManager : MonoBehaviour
     public static PlayerWeaponManager Instance { get; private set; }
 
     [SerializeField] private Transform gunHoldPoint;
-    private GameObject currentGun;
-    private string currentWeaponName;
+    [SerializeField] private SpriteRenderer playerSpriteRenderer; // přiřaď v inspektoru
 
+    private GameObject currentGun;
+    private SpriteRenderer gunSpriteRenderer;
+    private string currentWeaponName;
     private string saveFilePath;
     private List<string> purchasedWeapons;
 
-    // Seznam build indexů scén, kde se má hledat GunHolder
-    private readonly HashSet<int> scenesWithGunHolder = new HashSet<int> { 1, 2 }; // např. 1 = Bunker, 2 = Outdoor
+    private Vector2 playerMovement;
+
+    private readonly HashSet<int> scenesWithGunHolder = new HashSet<int> { 1, 2 };
 
     private void Awake()
     {
@@ -107,6 +110,7 @@ public class PlayerWeaponManager : MonoBehaviour
         RemoveWeapon();
 
         currentGun = Instantiate(weaponPrefab, gunHoldPoint.position, Quaternion.identity, gunHoldPoint);
+        gunSpriteRenderer = currentGun.GetComponent<SpriteRenderer>();
         currentWeaponName = weaponPrefab.name;
     }
 
@@ -115,6 +119,7 @@ public class PlayerWeaponManager : MonoBehaviour
         if (currentGun == null) return;
         Destroy(currentGun);
         currentGun = null;
+        gunSpriteRenderer = null;
     }
 
     public bool IsWeaponEquipped(string weaponName) => currentWeaponName == weaponName;
@@ -142,6 +147,7 @@ public class PlayerWeaponManager : MonoBehaviour
     private void Update()
     {
         if (currentGun != null) RotateWeapon();
+        UpdateWeaponSorting();
     }
 
     private void RotateWeapon()
@@ -154,6 +160,27 @@ public class PlayerWeaponManager : MonoBehaviour
 
         currentGun.transform.rotation = Quaternion.Euler(0, 0, angle);
         currentGun.transform.localScale = (angle > 90 || angle < -90) ? new Vector3(1, -1, 1) : Vector3.one;
+    }
+
+    public void SetPlayerMovement(Vector2 movement)
+    {
+        playerMovement = movement;
+    }
+
+    private void UpdateWeaponSorting()
+    {
+        if (gunSpriteRenderer == null || playerSpriteRenderer == null) return;
+
+        if (playerMovement.y > 0.1f)
+        {
+            // hráč jde nahoru → zbraň za hráčem
+            gunSpriteRenderer.sortingOrder = playerSpriteRenderer.sortingOrder - 1;
+        }
+        else
+        {
+            // dolů nebo do stran → zbraň před hráčem
+            gunSpriteRenderer.sortingOrder = playerSpriteRenderer.sortingOrder + 1;
+        }
     }
 }
 

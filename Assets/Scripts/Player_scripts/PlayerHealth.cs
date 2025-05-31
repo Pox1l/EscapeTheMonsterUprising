@@ -50,8 +50,6 @@ public class PlayerHealth : MonoBehaviour
     {
         LoadHealth();
         if (currentHealth <= 0) currentHealth = maxHealth;
-
-        // Ručně zavoláme scénovou inicializaci UI
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
@@ -101,6 +99,25 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0) Die();
     }
 
+    private void Die()
+    {
+        Debug.Log("Player has died!");
+        isDead = true;
+
+        GameOverManager gm = FindObjectOfType<GameOverManager>();
+        AudioManager.instance.DeadClip();
+        if (gm) gm.ShowGameOverUI();
+        else Debug.LogError("GameOverManager nebyl nalezen!");
+    }
+
+    public void Respawn()
+    {
+        isDead = false;
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+        SaveIfChanged();
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         StartCoroutine(WaitAndAssignUI());
@@ -111,7 +128,6 @@ public class PlayerHealth : MonoBehaviour
         yield return null;
         yield return null;
 
-        // Vyhledání UI jen pokud existuje
         healthText = GameObject.Find("HealthText")?.GetComponent<TextMeshProUGUI>();
         healthSlider = GameObject.Find("HealthSlider")?.GetComponent<Slider>();
 
@@ -128,17 +144,6 @@ public class PlayerHealth : MonoBehaviour
     {
         if (healthText) healthText.text = $"HP: {currentHealth}";
         if (healthSlider) healthSlider.value = currentHealth;
-    }
-
-    private void Die()
-    {
-        Debug.Log("Player has died!");
-        isDead = true;
-
-        GameOverManager gm = FindObjectOfType<GameOverManager>();
-        AudioManager.instance.DeadClip();
-        if (gm) gm.ShowGameOverUI();
-        else Debug.LogError("GameOverManager nebyl nalezen!");
     }
 
     private async void SaveHealthAsync()

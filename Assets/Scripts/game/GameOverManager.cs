@@ -3,14 +3,14 @@ using UnityEngine.SceneManagement;
 
 public class GameOverManager : MonoBehaviour
 {
-    public GameObject gameOverPanel; // Pøipoj UI panel
-    public int moneyLossOnDeath = 50; // Poèet penìz, které hráè ztratí pøi smrti
+    public GameObject gameOverPanel;
+    public int moneyLossOnDeath = 50;
 
     void Start()
     {
         if (gameOverPanel != null)
         {
-            gameOverPanel.SetActive(false); // Na zaèátku skryté
+            gameOverPanel.SetActive(false);
         }
         else
         {
@@ -25,7 +25,7 @@ public class GameOverManager : MonoBehaviour
             gameOverPanel.SetActive(true);
         }
 
-        Time.timeScale = 0f; // Zastaví èas ve høe
+        Time.timeScale = 0f;
     }
 
     private void LoseMoneyOnDeath()
@@ -38,22 +38,22 @@ public class GameOverManager : MonoBehaviour
 
     public void RestartGame()
     {
-        Time.timeScale = 1f; // Obnoví èas
+        Time.timeScale = 1f;
 
         if (PlayerHealth.Instance != null)
         {
-            PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Reset HP
+            PlayerHealth.Instance.Respawn(); // Správný respawn
         }
 
         if (gameOverPanel != null)
         {
-            gameOverPanel.SetActive(false); // Skryje UI
+            gameOverPanel.SetActive(false);
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
-        SceneManager.LoadScene(1); // Naète první scénu
+        SceneManager.LoadScene(1);
 
-        LoseMoneyOnDeath(); // Odebere peníze po smrti
+        LoseMoneyOnDeath();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -75,8 +75,9 @@ public class GameOverManager : MonoBehaviour
     {
         if (PlayerHealth.Instance != null)
         {
-            PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth); // Nastaví HP na max
+            PlayerHealth.Instance.SetHealth(PlayerHealth.Instance.maxHealth);
         }
-        Application.Quit(); // Ukonèí hru
+
+        Application.Quit();
     }
 }

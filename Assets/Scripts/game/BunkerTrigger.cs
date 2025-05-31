@@ -1,38 +1,39 @@
 using UnityEngine;
-using UnityEngine.UI; // Pro zobrazení UI textu
-using UnityEngine.SceneManagement; // Pro pøepínání scén
+using UnityEngine.SceneManagement;
 
 public class BunkerTrigger : MonoBehaviour
 {
-    public GameObject interactText; // Text, který se zobrazí (napø. "Drž E pro vstup")
-    public float holdTime = 2f; // Doba držení E pro pøechod
-    private float holdProgress = 0f; // Sledování držení klávesy
+    public GameObject interactText;
+    public float holdTime = 2f;
+    private float holdProgress = 0f;
+    private bool playerInRange = false;
 
-    private bool playerInRange = false; // Sleduje, zda je hráè v oblasti
+    public int targetSceneIndex = 1;
 
-    // ID scény, kam se pøechází
-    public int targetSceneIndex = 1; // Èíslo scény (napø. 1 = GameInside)
+    private bool triggered = false;
 
     void Start()
     {
         if (interactText != null)
-            interactText.SetActive(false); // Schová text pøi startu
+            interactText.SetActive(false);
     }
 
     void Update()
     {
+        if (triggered) return;
+
         if (playerInRange && Input.GetKey(KeyCode.E))
         {
             holdProgress += Time.deltaTime;
-
             if (holdProgress >= holdTime)
             {
+                triggered = true;
                 MovePlayerToScene();
             }
         }
         else if (playerInRange)
         {
-            holdProgress = Mathf.Max(0, holdProgress - Time.deltaTime); // Resetuje postup, pokud E není drženo
+            holdProgress = Mathf.Max(0, holdProgress - Time.deltaTime);
         }
     }
 
@@ -42,7 +43,7 @@ public class BunkerTrigger : MonoBehaviour
         {
             playerInRange = true;
             if (interactText != null)
-                interactText.SetActive(true); // Zobrazí text
+                interactText.SetActive(true);
         }
     }
 
@@ -51,37 +52,47 @@ public class BunkerTrigger : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             playerInRange = false;
-            holdProgress = 0f; // Resetuje postup držení
+            holdProgress = 0f;
             if (interactText != null)
-                interactText.SetActive(false); // Skryje text
+                interactText.SetActive(false);
         }
     }
 
     private void MovePlayerToScene()
     {
-        // Najde hráèe
         GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
 
-        if (player != null)
+        DontDestroyOnLoad(player);
+
+        // Pøehrát zvuk otevøení dveøí
+        if (AudioManager.instance != null)
+            AudioManager.instance.OpenDoor();
+
+        // Pøechod pomocí SceneLoaderu
+        SceneLoader loader = FindObjectOfType<SceneLoader>();
+        if (loader != null)
         {
-            DontDestroyOnLoad(player); // Zajistí, že hráè nezmizí
-            SceneManager.LoadScene(targetSceneIndex); // Pøepne na cílovou scénu
-
-            // Po naètení scény správnì umístí hráèe
+            loader.LoadSceneWithTransition(targetSceneIndex, () =>
+            {
+                GameObject entryPoint = GameObject.FindGameObjectWithTag("EntryPoint");
+                if (entryPoint != null)
+                    player.transform.position = entryPoint.transform.position;
+            });
+        }
+        else
+        {
+            // Záložní pøechod bez loaderu
             SceneManager.sceneLoaded += (scene, mode) =>
             {
                 if (scene.buildIndex == targetSceneIndex)
                 {
-                    // Najdi vstupní bod ve druhé scénì (napø. objekt s tagem "EntryPoint")
                     GameObject entryPoint = GameObject.FindGameObjectWithTag("EntryPoint");
                     if (entryPoint != null)
-                    {
-                        player.transform.position = entryPoint.transform.position; // Pøemísti hráèe
-                    }
-
-                    SceneManager.sceneLoaded -= null; // Odebere posluchaè pro tuto událost
+                        player.transform.position = entryPoint.transform.position;
                 }
             };
+            SceneManager.LoadScene(targetSceneIndex);
         }
     }
 }

@@ -1,26 +1,53 @@
 using UnityEngine;
-using UnityEngine.UI; // Pro zobrazení UI textu
-using UnityEngine.SceneManagement; // Pro pøepínání scén
+using UnityEngine.SceneManagement;
 
 public class BunkerExit : MonoBehaviour
 {
-    public GameObject interactText; // Text, který se zobrazí (napø. "Stiskni E pro výstup")
-    public Vector3 fallbackPosition = new Vector3(0, 0, 0); // Pozice, kam hráè spadne, pokud EntryPoint neexistuje
-    private bool playerInRange = false; // Sleduje, zda je hráè v oblasti
+    public GameObject interactText;
+    public Vector3 fallbackPosition = new Vector3(0, 0, 0);
+    private bool playerInRange = false;
 
     void Start()
     {
         if (interactText != null)
-            interactText.SetActive(false); // Skryje text pøi startu
+            interactText.SetActive(false);
     }
 
     void Update()
     {
         if (playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            // Nastav aktuální pozici hráèe pro novou scénu
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            SceneManager.LoadScene(2); // Pøepne na scénu venku
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                DontDestroyOnLoad(player);
+
+            // Zvuk pøes AudioManager
+            if (AudioManager.instance != null)
+                AudioManager.instance.CloseDoor();
+
+            SceneLoader loader = FindObjectOfType<SceneLoader>();
+            if (loader != null)
+            {
+                loader.LoadSceneWithTransition(2, () =>
+                {
+                    GameObject entryPoint = GameObject.FindGameObjectWithTag("EntryPoint");
+                    if (player != null && entryPoint != null)
+                    {
+                        player.transform.position = entryPoint.transform.position;
+                    }
+                    else if (player != null)
+                    {
+                        player.transform.position = fallbackPosition;
+                        Debug.LogWarning("EntryPoint nebyl nalezen, hráè pøesunut na fallback pozici.");
+                    }
+                });
+            }
+            else
+            {
+                // Záložní pøechod bez loaderu
+                SceneManager.sceneLoaded += OnSceneLoaded;
+                SceneManager.LoadScene(2);
+            }
         }
     }
 
@@ -30,7 +57,7 @@ public class BunkerExit : MonoBehaviour
         {
             playerInRange = true;
             if (interactText != null)
-                interactText.SetActive(true); // Zobrazí text
+                interactText.SetActive(true);
         }
     }
 
@@ -40,25 +67,23 @@ public class BunkerExit : MonoBehaviour
         {
             playerInRange = false;
             if (interactText != null)
-                interactText.SetActive(false); // Skryje text
+                interactText.SetActive(false);
         }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded; // Odpoj událost po naètení scény
+        SceneManager.sceneLoaded -= OnSceneLoaded;
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         GameObject entryPoint = GameObject.FindGameObjectWithTag("EntryPoint");
 
         if (player != null && entryPoint != null)
         {
-            // Pøesuò hráèe na EntryPoint
             player.transform.position = entryPoint.transform.position;
         }
         else if (player != null)
         {
-            // Pokud EntryPoint neexistuje, nastav fallback pozici
             player.transform.position = fallbackPosition;
             Debug.LogWarning("EntryPoint nebyl nalezen, hráè pøesunut na fallback pozici.");
         }

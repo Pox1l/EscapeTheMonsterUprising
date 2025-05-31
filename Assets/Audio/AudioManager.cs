@@ -14,6 +14,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip damageClip;
     public AudioClip deadClip;
     public AudioClip healClip;
+    public AudioClip closeDoorClip;
+    public AudioClip openDoorClip;
+
 
     private void Awake()
     {
@@ -96,6 +99,14 @@ public class AudioManager : MonoBehaviour
     public void HealClip()
     {
         PlaySFX(healClip);
+    }
+    public void CloseDoor()
+    {
+        PlaySFX(closeDoorClip);
+    }
+    public void OpenDoor()
+    {
+        PlaySFX(openDoorClip);
     }
 
 }
