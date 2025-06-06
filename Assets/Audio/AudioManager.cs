@@ -59,7 +59,7 @@ public class AudioManager : MonoBehaviour
     {
         musicSource.volume = PlayerPrefs.GetFloat("MusicVolume", 0.5f);
         sfxSource.volume = PlayerPrefs.GetFloat("SFXVolume", 0.5f);
-        uiSource.volume = PlayerPrefs.GetFloat("UIVolume", 0.5f);
+        //uiSource.volume = PlayerPrefs.GetFloat("UIVolume", 0.5f);
     }
 
     public void PlaySFX(AudioClip clip)

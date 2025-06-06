@@ -8,13 +8,16 @@ public class PlayerWeaponManager : MonoBehaviour
     public static PlayerWeaponManager Instance { get; private set; }
 
     [SerializeField] private Transform gunHoldPoint;
-    [SerializeField] private SpriteRenderer playerSpriteRenderer; // přiřaď v inspektoru
+    [SerializeField] private SpriteRenderer playerSpriteRenderer;
+    [SerializeField] private SpriteRenderer debugGunSpriteRenderer; // Přidáno pro vizuální kontrolu v inspektoru
 
     private GameObject currentGun;
     private SpriteRenderer gunSpriteRenderer;
     private string currentWeaponName;
     private string saveFilePath;
     private List<string> purchasedWeapons;
+    private bool hasWarnedGunMissing = false;
+
 
     private Vector2 playerMovement;
 
@@ -41,6 +44,24 @@ public class PlayerWeaponManager : MonoBehaviour
             gunHoldPoint = FindGunHoldPoint();
             if (!string.IsNullOrEmpty(currentWeaponName))
                 LoadWeapon(currentWeaponName);
+        }
+
+        if (playerSpriteRenderer == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                playerSpriteRenderer = player.GetComponent<SpriteRenderer>() ?? player.GetComponentInChildren<SpriteRenderer>();
+
+                if (playerSpriteRenderer != null)
+                    Debug.Log("✅ PlayerSpriteRenderer automaticky nalezen.");
+                else
+                    Debug.LogError("❌ PlayerSpriteRenderer se nepodařilo najít na hráči.");
+            }
+            else
+            {
+                Debug.LogError("❌ Objekt s tagem 'Player' nebyl nalezen.");
+            }
         }
     }
 
@@ -110,8 +131,36 @@ public class PlayerWeaponManager : MonoBehaviour
         RemoveWeapon();
 
         currentGun = Instantiate(weaponPrefab, gunHoldPoint.position, Quaternion.identity, gunHoldPoint);
-        gunSpriteRenderer = currentGun.GetComponent<SpriteRenderer>();
         currentWeaponName = weaponPrefab.name;
+
+        gunSpriteRenderer = currentGun.GetComponentInChildren<SpriteRenderer>(true);
+
+        if (gunSpriteRenderer == null)
+        {
+            GameObject taggedGun = GameObject.FindGameObjectWithTag("Gun");
+            if (taggedGun != null)
+            {
+                gunSpriteRenderer = taggedGun.GetComponent<SpriteRenderer>();
+                Debug.Log("GunSpriteRenderer nalezen přes tag 'Gun'.");
+            }
+        }
+
+        if (gunSpriteRenderer == null)
+        {
+            Debug.LogError("❌ SpriteRenderer nebyl nalezen na instanci zbraně: " + currentGun.name);
+        }
+        else
+        {
+            // Nastavení vrstvy a pořadí
+            if (playerSpriteRenderer != null)
+            {
+                gunSpriteRenderer.sortingLayerID = playerSpriteRenderer.sortingLayerID;
+                gunSpriteRenderer.sortingOrder = playerSpriteRenderer.sortingOrder + 1;
+                Debug.Log($"✅ GunSpriteRenderer vrstvy zarovnán s hráčem ({SortingLayer.IDToName(gunSpriteRenderer.sortingLayerID)}), order: {gunSpriteRenderer.sortingOrder}");
+            }
+
+            debugGunSpriteRenderer = gunSpriteRenderer; // viditelné v inspektoru
+        }
     }
 
     public void RemoveWeapon()
@@ -120,6 +169,7 @@ public class PlayerWeaponManager : MonoBehaviour
         Destroy(currentGun);
         currentGun = null;
         gunSpriteRenderer = null;
+        debugGunSpriteRenderer = null;
     }
 
     public bool IsWeaponEquipped(string weaponName) => currentWeaponName == weaponName;
@@ -139,9 +189,13 @@ public class PlayerWeaponManager : MonoBehaviour
 
         GameObject prefab = Resources.Load<GameObject>("Weapons/" + weaponName);
         if (prefab != null)
+        {
             EquipWeapon(prefab);
+        }
         else
+        {
             Debug.LogError("Weapon not found: " + weaponName);
+        }
     }
 
     private void Update()
@@ -169,23 +223,42 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void UpdateWeaponSorting()
     {
-        if (gunSpriteRenderer == null || playerSpriteRenderer == null) return;
+        if (gunSpriteRenderer == null)
+        {
+            if (!hasWarnedGunMissing)
+            {
+                Debug.LogWarning("⚠️ gunSpriteRenderer je null – zbraň možná ještě není instancována.");
+                hasWarnedGunMissing = true;
+            }
+            return;
+        }
+
+        hasWarnedGunMissing = false; // resetujeme, pokud už zbraň existuje
+
+        if (playerSpriteRenderer == null)
+        {
+            Debug.LogWarning("⚠️ playerSpriteRenderer není přiřazen.");
+            return;
+        }
 
         if (playerMovement.y > 0.1f)
         {
-            // hráč jde nahoru → zbraň za hráčem
             gunSpriteRenderer.sortingOrder = playerSpriteRenderer.sortingOrder - 1;
+            Debug.Log("🔽 Zbraň za hráčem");
         }
         else
         {
-            // dolů nebo do stran → zbraň před hráčem
             gunSpriteRenderer.sortingOrder = playerSpriteRenderer.sortingOrder + 1;
+            Debug.Log("🔼 Zbraň před hráčem");
         }
-    }
-}
 
-[System.Serializable]
-public class WeaponSaveData
-{
-    public List<string> weapons;
+        Debug.Log($"🎯 [DEBUG] Player Layer: {playerSpriteRenderer.sortingLayerName} / {playerSpriteRenderer.sortingOrder} | Gun Layer: {gunSpriteRenderer.sortingLayerName} / {gunSpriteRenderer.sortingOrder}");
+    }
+
+
+    [System.Serializable]
+    public class WeaponSaveData
+    {
+        public List<string> weapons;
+    }
 }

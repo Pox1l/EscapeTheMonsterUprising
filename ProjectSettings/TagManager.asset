@@ -18,6 +18,7 @@ TagManager:
   - NPCCountText
   - DirectionArrowNPC
   - DirectionArrowHatch
+  - Gun
   layers:
   - Default
   - TransparentFX

@@ -17,6 +17,6 @@ public class AudioSettingsUI : MonoBehaviour
         // Pøidání listenerù pro zmìnu hlasitosti
         musicSlider.onValueChanged.AddListener(AudioManager.instance.SetMusicVolume);
         sfxSlider.onValueChanged.AddListener(AudioManager.instance.SetSFXVolume);
-        uiSlider.onValueChanged.AddListener(AudioManager.instance.SetUIVolume);
+        uiSlider.onValueChanged.AddListener(AudioUIManager.instance.SetUIVolume);
     }
 }

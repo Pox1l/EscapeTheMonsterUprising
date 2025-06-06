@@ -63,10 +63,11 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void TakeDamage(int damage)
+    // TakeDamage bere i smìr zásahu
+    public void TakeDamage(int damage, Vector2 hitDirection)
     {
         currentHealth -= damage;
-        SpawnDamageParticle();
+        SpawnDamageParticle(hitDirection);
 
         if (currentHealth <= 0)
         {
@@ -84,11 +85,17 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void SpawnDamageParticle()
+    private void SpawnDamageParticle(Vector2 hitDirection)
     {
         if (damageParticle != null)
         {
-            Instantiate(damageParticle, transform.position, Quaternion.identity);
+            ParticleSystem ps = Instantiate(damageParticle, transform.position, Quaternion.identity);
+
+            // Otoèí particle opaènì než smìr zásahu (krvavý efekt vyletí z druhé strany)
+            float angle = Mathf.Atan2(-hitDirection.y, -hitDirection.x) * Mathf.Rad2Deg;
+            ps.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+            ps.Play();
         }
     }
 }
