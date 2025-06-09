@@ -11,7 +11,8 @@ public class PlayerWeaponManager : MonoBehaviour
     [SerializeField] private SpriteRenderer playerSpriteRenderer;
     [SerializeField] private SpriteRenderer debugGunSpriteRenderer; // Přidáno pro vizuální kontrolu v inspektoru
 
-    private GameObject currentGun;
+    [SerializeField] private string defaultWeaponName = "Pistol";
+    [SerializeField] private GameObject currentGun;
     private SpriteRenderer gunSpriteRenderer;
     private string currentWeaponName;
     private string saveFilePath;
@@ -39,11 +40,26 @@ public class PlayerWeaponManager : MonoBehaviour
         saveFilePath = Application.persistentDataPath + "/purchasedWeapons.json";
         LoadPurchasedWeapons();
 
+        // ✅ Pokud hráč nemá žádné zbraně, automaticky se přidá výchozí
+        if (purchasedWeapons.Count == 0 && !string.IsNullOrEmpty(defaultWeaponName))
+        {
+            PurchaseWeapon(defaultWeaponName);
+            Debug.Log("🆕 Výchozí zbraň '" + defaultWeaponName + "' byla automaticky přidána hráči.");
+        }
+
         if (IsSceneWithGunHolder())
         {
             gunHoldPoint = FindGunHoldPoint();
+
+            if (string.IsNullOrEmpty(currentWeaponName) && !string.IsNullOrEmpty(defaultWeaponName))
+            {
+                currentWeaponName = defaultWeaponName;
+            }
+
             if (!string.IsNullOrEmpty(currentWeaponName))
+            {
                 LoadWeapon(currentWeaponName);
+            }
         }
 
         if (playerSpriteRenderer == null)
@@ -64,6 +80,7 @@ public class PlayerWeaponManager : MonoBehaviour
             }
         }
     }
+
 
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
