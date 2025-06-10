@@ -321,7 +321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 75
-  damageToTarget: 10
+  damageToTarget: 15
   damageRange: 1
   damageInterval: 1
   damageParticle: {fileID: 4497852029954134139, guid: 3ee1453d7262e7245b858a20df5d76da, type: 3}

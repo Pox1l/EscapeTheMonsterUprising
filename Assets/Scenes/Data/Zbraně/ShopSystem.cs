@@ -4,6 +4,7 @@ using UnityEngine.UI; // Potøebné pro práci s UI Button
 
 public class ShopSystem : MonoBehaviour
 {
+    [SerializeField] private GameObject interactText; // Interakèní text nebo ikona
     [SerializeField] private GameObject[] weaponPrefabs;
     [SerializeField] private int[] weaponCosts;
     [SerializeField] private TMP_Text moneyText;
@@ -31,6 +32,9 @@ public class ShopSystem : MonoBehaviour
         {
             Debug.LogWarning("Shop UI is not assigned.");
         }
+        if (interactText != null)
+            interactText.SetActive(false);
+
     }
 
     private void Update()
@@ -217,6 +221,9 @@ public class ShopSystem : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInShopZone = true;
+
+            if (interactText != null)
+                interactText.SetActive(true);
         }
     }
 
@@ -225,16 +232,19 @@ public class ShopSystem : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInShopZone = false;
+
+            if (interactText != null)
+                interactText.SetActive(false);
+
             if (isShopOpen)
-            {
                 ToggleShopUI();
-            }
         }
     }
+
 
     //Nastavení NPC Requirements(mùžeš to pøidat pøímo do inspektoru)
     public void ApplyNPCUnlocks()
     {
-        npcRequirements = new int[] { 0, 5, 10, 20, 30 }; // Nastavení poètu NPC pro odemèení zbraní
+        npcRequirements = new int[] { 0, 5, 10, 20, 30, 40, 50}; // Nastavení poètu NPC pro odemèení zbraní
     }
 }

@@ -12,6 +12,7 @@ public class NPCSpawner : MonoBehaviour
     [Header("References")]
     public Transform player;
 
+    [SerializeField]
     private GameObject[] npcPrefabs;
     private int totalNPC;
     private TextMeshProUGUI counter;

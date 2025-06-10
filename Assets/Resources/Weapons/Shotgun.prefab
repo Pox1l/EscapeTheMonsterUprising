@@ -104,6 +104,9 @@ MonoBehaviour:
   bulletSpeed: 10
   bulletLifeTime: 5
   bulletDamage: 25
+  isShotgun: 1
+  pelletCount: 3
+  spreadAngle: 15
 --- !u!1 &8132662864519428065
 GameObject:
   m_ObjectHideFlags: 0

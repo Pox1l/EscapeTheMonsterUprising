@@ -11,6 +11,11 @@ public class MonsterSpawner : MonoBehaviour
     public float increaseInterval = 30f;  // Interval pro zvyšování maximálního poètu monster
     public Tilemap grassTilemap;           // Tilemap, kde se monstra mohou spawnovat
 
+    public float spawnDecreaseAmount = 0.2f;    // O kolik se zkrátí spawnInterval
+    public float minSpawnInterval = 0.5f;       // Minimální možná hodnota spawnInterval
+
+
+
     private Camera mainCamera;
     private float nextSpawnTime;
     private float nextIncreaseTime;
@@ -34,21 +39,26 @@ public class MonsterSpawner : MonoBehaviour
 
     void Update()
     {
-        // Zvyšování maximálního poètu monster
+        // Zvyšování maximálního poètu monster a zrychlování spawnování
         if (Time.time >= nextIncreaseTime)
         {
             maxMonsters++;
             nextIncreaseTime = Time.time + increaseInterval;
-            Debug.Log($"Maximální poèet monster zvýšen na {maxMonsters}.");
+
+            // Snížení intervalu spawnování, ale nikdy pod minimum
+            spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval - spawnDecreaseAmount);
+
+            Debug.Log($"Maximální poèet monster zvýšen na {maxMonsters}, spawn interval je teï {spawnInterval} sekund.");
         }
 
-        // Spawnuj monstra, pokud je to èasovì vhodné a nepøekroèen limit
+        // Spawnuj monstra, pokud je èas a nepøekroèen limit
         if (Time.time >= nextSpawnTime && CountMonsters() < maxMonsters)
         {
             SpawnMonster();
             nextSpawnTime = Time.time + spawnInterval;
         }
     }
+
 
     void SpawnMonster()
     {

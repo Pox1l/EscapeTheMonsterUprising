@@ -21,9 +21,10 @@ public class NPCFollow : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI npcCountText;
     public TextMeshProUGUI npcRemainingText;
+    public GameObject pressEIcon;  // 👈 Ikonka "E" nad NPC
+
     public static int followingNPCCount = 0;
     private const int maxFollowingNPCs = 2;
-
     public static int totalNPCs = 0;
     public static event Action OnNPCCountChanged;
 
@@ -42,7 +43,7 @@ public class NPCFollow : MonoBehaviour
     private float wanderTimer;
     private float currentWanderInterval;
     private HatchManager hatchManager;
-    private bool isRemoved = false; //  NOVĚ PŘIDÁNO
+    private bool isRemoved = false;
 
     private void Awake()
     {
@@ -66,11 +67,12 @@ public class NPCFollow : MonoBehaviour
 
         FindPlayer();
         UpdateNPCCountUI();
-
         OnNPCCountChanged += UpdateTotalNPCUI;
         UpdateTotalNPCUI();
-
         ResetWander();
+
+        if (pressEIcon != null)
+            pressEIcon.SetActive(false);
     }
 
     private void Update()
@@ -149,21 +151,37 @@ public class NPCFollow : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.CompareTag("Player")) inRange = true;
-        if (col.CompareTag("Hatch") && isFollowing) RescueNPC();
+        if (col.CompareTag("Player"))
+        {
+            inRange = true;
+            if (pressEIcon != null)
+                pressEIcon.SetActive(true);
+        }
+
+        if (col.CompareTag("Hatch") && isFollowing)
+        {
+            RescueNPC();
+        }
     }
 
     private void OnTriggerExit2D(Collider2D col)
     {
-        if (col.CompareTag("Player")) inRange = false;
+        if (col.CompareTag("Player"))
+        {
+            inRange = false;
+            if (pressEIcon != null)
+                pressEIcon.SetActive(false);
+        }
     }
 
     private void RescueNPC()
     {
-        if (isRemoved) return; //  chrání před dvojím zavoláním
+        if (isRemoved) return;
+
         isRemoved = true;
 
-        if (exportParticle) Instantiate(exportParticle, transform.position, Quaternion.identity);
+        if (exportParticle)
+            Instantiate(exportParticle, transform.position, Quaternion.identity);
 
         isFollowing = false;
         followingNPCCount--;
@@ -204,7 +222,8 @@ public class NPCFollow : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (isRemoved) return; //  už byl odstraněn/zachráněn
+        if (isRemoved) return;
+
         isRemoved = true;
 
         if (isFollowing)

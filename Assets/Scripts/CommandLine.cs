@@ -119,6 +119,20 @@ public class CommandLine : MonoBehaviour
                     Debug.LogError("PlayerHealth instance not found!");
                 }
                 break;
+            case "key":
+                if (PlayerInventory.instance != null)
+                {
+                    PlayerInventory.instance.hasKey = true;
+                    ShowFeedback("Player received the key!");
+                    Debug.Log("Player received the key!");
+                }
+                else
+                {
+                    ShowFeedback("PlayerInventory instance not found!");
+                    Debug.LogError("PlayerInventory instance not found!");
+                }
+                break;
+
 
             default:
                 ShowFeedback("Unknown command: " + command);
